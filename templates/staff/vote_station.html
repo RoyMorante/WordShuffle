@@ -1,0 +1,227 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+.station-wrapper {
+    max-width: 950px;
+    margin: auto;
+}
+
+.station-card {
+    background: var(--card);
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.station-title {
+    margin-bottom: 18px;
+}
+
+#reader {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.status-box {
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    min-height: 45px;
+}
+
+.status-valid {
+    background: rgba(34,197,94,0.15);
+    border: 1px solid rgba(34,197,94,0.4);
+    color: #16a34a;
+}
+
+.status-error {
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #dc2626;
+}
+
+.vote-form {
+    margin-top: 26px;
+}
+
+.hidden {
+    display: none;
+}
+
+.exhibitor-box {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.criteria-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.criteria-row input {
+    width: 70px;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    text-align: center;
+}
+
+.criteria-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+.submit-btn {
+    margin-top: 16px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    opacity: 0.9;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 30px;
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 600;
+}
+</style>
+
+<div class="station-wrapper">
+    <div class="station-card">
+
+        <h2 class="station-title">Voting Station</h2>
+
+        <div id="reader"></div>
+
+        <div id="status" class="status-box"></div>
+
+        <form id="voteForm" class="vote-form hidden">
+            {% csrf_token %}
+            <input type="hidden" id="viewer_id" name="viewer_id">
+
+            {% for exhibitor in exhibitors %}
+                <div class="exhibitor-box">
+                    <strong>{{ exhibitor.name }}</strong>
+
+                    {% for criteria in criteria_list %}
+                        <div class="criteria-row">
+                            <span>{{ criteria.name }} (1–5)</span>
+                            <input type="number"
+                                   min="1"
+                                   max="5"
+                                   inputmode="numeric"
+                                   pattern="[1-5]"
+                                   name="score_{{ exhibitor.id }}_{{ criteria.id }}"
+                                   required>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="button" onclick="submitVote()" class="submit-btn">
+                Submit Vote
+            </button>
+        </form>
+
+        <a href="/adminpanel/staff/dashboard/" class="back-link">
+            ← Back to Dashboard
+        </a>
+
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+const statusDiv = document.getElementById('status');
+const voteForm = document.getElementById('voteForm');
+
+function setStatus(message, type) {
+    statusDiv.className = "status-box";
+    if(type === "valid") {
+        statusDiv.classList.add("status-valid");
+    } else {
+        statusDiv.classList.add("status-error");
+    }
+    statusDiv.innerHTML = message;
+}
+
+function onScanSuccess(decodedText) {
+
+    fetch('/adminpanel/staff/validate-viewer/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `qr_token=${decodedText}`
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.status === "valid") {
+            setStatus("Voting for: " + data.viewer_name, "valid");
+            document.getElementById('viewer_id').value = data.viewer_id;
+            voteForm.classList.remove('hidden');
+        } else {
+            setStatus(data.error, "error");
+        }
+    });
+}
+
+const html5QrCode = new Html5Qrcode("reader");
+
+Html5Qrcode.getCameras().then(devices => {
+    if (devices.length) {
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            onScanSuccess
+        );
+    }
+});
+
+function submitVote() {
+
+    const formData = new FormData(voteForm);
+
+    fetch('/adminpanel/staff/submit-vote/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        setStatus("Vote submitted successfully", "valid");
+        voteForm.reset();
+        voteForm.classList.add('hidden');
+    });
+}
+</script>
+
+{% endblock %}

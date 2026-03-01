@@ -1,0 +1,129 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+.register-wrapper {
+    max-width: 700px;
+    margin: auto;
+}
+
+.register-card {
+    background: var(--card);
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.register-title {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+input, select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+.submit-btn {
+    margin-top: 10px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+}
+
+.submit-btn:hover {
+    opacity: 0.9;
+}
+
+.error-box {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #dc2626;
+    font-weight: 500;
+}
+
+.section-divider {
+    margin: 18px 0;
+    border-top: 1px solid var(--border);
+}
+</style>
+
+<div class="register-wrapper">
+    <div class="register-card">
+
+        <h2 class="register-title">Register Viewer & Generate QR</h2>
+
+        {% if error %}
+            <div class="error-box">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <input name="full_name" placeholder="Full Name" required>
+            </div>
+
+            <div class="form-group">
+                <input name="email" type="email" placeholder="Email" required>
+            </div>
+
+            <div class="form-group">
+                <select name="gender">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <select name="user_type">
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="employee">Employee</option>
+                    <option value="others">Others</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input name="department" placeholder="Department">
+            </div>
+
+            <button type="submit" class="submit-btn">
+                Generate QR
+            </button>
+            <a href="/adminpanel/staff/dashboard/" class="btn btn-secondary">
+                Back to Dashboard
+            </a>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

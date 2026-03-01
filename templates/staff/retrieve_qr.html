@@ -1,0 +1,154 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+/* Layout Wrapper */
+.qr-wrapper {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Card */
+.qr-card {
+    width: 100%;
+    max-width: 420px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+}
+
+/* Dark mode support (if your base toggles data-theme) */
+[data-theme="dark"] .qr-card {
+    background: #1f2937;
+    border-color: #374151;
+    color: #ffffff;
+}
+
+/* Title */
+.qr-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+}
+
+/* Error */
+.qr-error {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+[data-theme="dark"] .qr-error {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+/* Label */
+.qr-label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+/* Input */
+.qr-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qr-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+[data-theme="dark"] .qr-input {
+    background: #111827;
+    border-color: #374151;
+    color: #ffffff;
+}
+
+/* Button */
+.qr-btn {
+    width: 100%;
+    padding: 11px;
+    margin-top: 16px;
+    border-radius: 10px;
+    border: none;
+    background: #4f46e5;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.qr-btn:hover {
+    background: #4338ca;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .qr-card {
+        padding: 20px;
+    }
+
+    .qr-title {
+        font-size: 20px;
+    }
+}
+</style>
+
+<div class="qr-wrapper">
+
+    <div class="qr-card">
+
+        <h2 class="qr-title">
+            Retrieve & Print Visitor QR
+        </h2>
+
+        {% if error %}
+            <div class="qr-error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label class="qr-label">Visitor Email</label>
+
+            <input name="email"
+                   type="email"
+                   placeholder="Enter visitor email"
+                   required
+                   class="qr-input">
+
+            <button type="submit" class="qr-btn">
+                Retrieve QR
+            </button>
+
+            <a href="/adminpanel/staff/dashboard/" class="btn btn-secondary">
+                Back to Dashboard
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

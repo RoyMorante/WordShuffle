@@ -1,0 +1,97 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+.auth-container {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-card {
+    background: var(--card);
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-card h2 {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.helper-text {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 12px;
+    text-align: center;
+}
+</style>
+
+<div class="auth-container">
+    <div class="auth-card">
+
+        <h2>Exhibitor Login</h2>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <input name="username" placeholder="Username" required>
+            </div>
+
+            <div class="form-group">
+                <input name="password" type="password"
+                       placeholder="Password" required>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="helper-text">
+            Authorized exhibitors only.
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

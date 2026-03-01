@@ -1,0 +1,177 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+:root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --accent: #2563eb;
+    --border: #e5e7eb;
+    --overlay: rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f1f5f9;
+    --accent: #3b82f6;
+    --border: #334155;
+    --overlay: rgba(0,0,0,0.6);
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.main {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.card {
+    background: var(--card);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 480px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+input, select, button {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+}
+
+button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* Floating Sticky Button */
+.fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--accent);
+    color: #fff;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    z-index: 1000;
+}
+
+/* Overlay Menu */
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.menu-box {
+    background: var(--card);
+    padding: 25px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.menu-box a, .menu-box button {
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.menu-box a:hover,
+.menu-box button:hover {
+    background: var(--accent);
+    color: #fff;
+}
+</style>
+
+<div class="main">
+    <div class="card">
+        <h2>Visitor Registration</h2>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <input type="hidden" name="device_id" id="device_id">
+
+            <input name="email" placeholder="Email" required>
+            <input name="full_name" placeholder="Full Name" required>
+
+            <select name="gender">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+
+            <select name="user_type">
+                <option value="student">Student</option>
+                <option value="faculty">Faculty</option>
+                <option value="employee">Employee</option>
+                <option value="others">Others</option>
+            </select>
+
+            <input name="department" placeholder="Department">
+
+            <button type="submit">Register</button>
+        </form>
+    </div>
+</div>
+
+
+<script>
+function generateDeviceID() {
+    return btoa(
+        navigator.userAgent +
+        screen.width +
+        screen.height +
+        Intl.DateTimeFormat().resolvedOptions().timeZone
+    );
+}
+document.getElementById('device_id').value = generateDeviceID();
+
+
+</script>
+
+{% endblock %}

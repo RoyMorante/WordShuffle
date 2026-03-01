@@ -1,0 +1,2605 @@
+<html data-theme="dark">
+<head>
+    <title>Live Analytics TV Mode</title>
+    <meta http-equiv="refresh" content="10">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --bg-main: linear-gradient(135deg, #0a0f1c 0%, #0f1419 100%);
+            --header-bg: linear-gradient(90deg, #1a1f2e 0%, #16213e 100%);
+            --panel-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(20, 30, 48, 0.8) 100%);
+            --card-bg: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+            --text-color: #ffffff;
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f3f4f6;
+            --header-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --card-bg: #e5e7eb;
+            --text-color: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .tv-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .header {
+            background: var(--header-bg);
+            padding: 1.5vw 3vw;
+            border-bottom: 0.3vw solid #00d4ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+        }
+
+        .logo {
+            width: 4vw;
+            height: 4vw;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border-radius: 0.5vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.8vw;
+            color: #000;
+        }
+
+        .title-section h1 {
+            font-size: 2.5vw;
+            font-weight: 700;
+        }
+
+        .title-section p {
+            font-size: 1vw;
+            opacity: 0.7;
+            color: #00d4ff;
+        }
+
+        .toggle-btn {
+            cursor: pointer;
+            font-size: 1vw;
+            border: 1px solid #00d4ff;
+            padding: .5vw 1vw;
+            border-radius: .5vw;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            padding: 2vw 3vw;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2vw;
+            overflow: hidden;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 0.15vw solid #00d4ff;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 1.1vw;
+            opacity: 0.7;
+        }
+
+        .stat-value {
+            font-size: 3.5vw;
+            font-weight: 900;
+            color: #00d4ff;
+        }
+
+        .ranking-panel {
+            background: var(--panel-bg);
+            border: 0.15vw solid #333;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ranking-panel h3 {
+            font-size: 1.5vw;
+            margin-bottom: 1vw;
+            border-bottom: 0.2vw solid #00d4ff;
+            padding-bottom: .7vw;
+            color: #00d4ff;
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: .5vw;
+        }
+
+        .ranking-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            padding: .8vw;
+            background: rgba(255,255,255,.05);
+            border-radius: .5vw;
+            font-size: 1.1vw;
+        }
+
+        .ranking-score {
+            text-align: right;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: .8vw;
+            font-size: .9vw;
+        }
+
+        .metric-box {
+            background: rgba(255,255,255,.05);
+            padding: .8vw;
+            border-radius: .5vw;
+        }
+
+        .metric-box strong {
+            display:block;
+            margin-top:.4vw;
+            font-size:1.2vw;
+            color:#00d4ff;
+        }
+
+        .footer {
+            background: #000;
+            padding: 1vw 3vw;
+            border-top: .2vw solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: .9vw;
+        }
+
+        .status-active { color:#22c55e; }
+        .status-inactive { color:#ef4444; }
+
+    </style>
+</head>
+
+<body>
+
+<div class="tv-container">
+
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo">◆</div>
+            <div class="title-section">
+                <h1>Live Event Analytics</h1>
+                <p>Real-Time Performance Dashboard</p>
+            </div>
+        </div>
+
+        <div class="toggle-btn" onclick="toggleTheme()">Toggle Theme (T)</div>
+    </div>
+
+    <div class="content-wrapper">
+
+        <!-- Stats -->
+        <div class="stat-card">
+            <div class="stat-label">Total Viewers</div>
+            <div class="stat-value">{{ total_viewers }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Votes</div>
+            <div class="stat-value">{{ total_votes }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Visits</div>
+            <div class="stat-value">{{ total_visits }}</div>
+        </div>
+
+        <!-- Booth Visits -->
+        <div class="ranking-panel">
+            <h3>🏆 Booth Visits Ranking</h3>
+            <div class="ranking-list">
+                {% for row in visit_ranking %}
+                <div class="ranking-item">
+                    <div>{{ row.exhibitor__name|slice:":4"|upper }}</div>
+                    <div class="ranking-score">{{ row.total }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Voting Ranking -->
+        <div class="ranking-panel">
+            <h3>⭐ Voting Ranking</h3>
+            <div class="ranking-list">
+                {% for row in score_ranking %}
+                <div class="ranking-item">
+                    <div>{{ row.exhibitor__name|slice:":4"|upper }}</div>
+                    <div class="ranking-score">{{ row.total_score|default:0 }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Compact Metrics -->
+        <div class="ranking-panel">
+            <h3>📈 Performance Metrics</h3>
+            <div class="metrics-grid">
+                <div class="metric-box">Avg Visit<strong>3.5m</strong></div>
+                <div class="metric-box">Engagement<strong>87%</strong></div>
+                <div class="metric-box">Return Rate<strong>54%</strong></div>
+                <div class="metric-box">Peak Hour<strong>2PM</strong></div>
+                <div class="metric-box">Active Now<strong>342</strong></div>
+                <div class="metric-box">Conversion<strong>68%</strong></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <div>Exhibit Event System • Auto Refresh 10s</div>
+
+        <div>
+            {% if raffle_setting and raffle_setting.is_active %}
+                <span class="status-active">✓ RAFFLE ACTIVE</span>
+            {% else %}
+                <span class="status-inactive">✕ RAFFLE OFF</span>
+            {% endif %}
+        </div>
+
+        <div>© Live Dashboard</div>
+    </div>
+
+</div>
+
+<script>
+function toggleTheme(){
+    const root = document.documentElement;
+    const current = root.getAttribute("data-theme");
+    const next = current === "light" ? "dark" : "light";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("tv-theme", next);
+}
+
+(function(){
+    const saved = localStorage.getItem("tv-theme");
+    if(saved){
+        document.documentElement.setAttribute("data-theme", saved);
+    }
+})();
+
+document.addEventListener("keydown", function(e){
+    if(e.key.toLowerCase() === "t"){
+        toggleTheme();
+    }
+});
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} <!DOCTYPE html>
+<html>
+<head>
+    <title>Live Analytics TV Mode</title>
+    <meta http-equiv="refresh" content="10">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #0f1419;
+            --bg-tertiary: #1a1f2e;
+            --accent-cyan: #00d4ff;
+            --accent-blue: #0099ff;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+        }
+
+        body.light-mode {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e8ecf1;
+            --accent-cyan: #0099ff;
+            --accent-blue: #0066cc;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .tv-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(90deg, var(--bg-tertiary) 0%, rgba(22, 33, 62, 0.8) 100%);
+            padding: 1.5vw 3vw;
+            border-bottom: 0.3vw solid var(--accent-cyan);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2vw;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2vw;
+            flex: 1;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 0.15vw solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 0.6vw 1.2vw;
+            border-radius: 0.5vw;
+            font-size: 0.95vw;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+        }
+
+        .logo {
+            width: 4vw;
+            height: 4vw;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border-radius: 0.5vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.8vw;
+            color: #000;
+        }
+
+        .title-section h1 {
+            font-size: 2.5vw;
+            font-weight: 700;
+            letter-spacing: 0.1vw;
+            margin-bottom: 0.3vw;
+        }
+
+        .title-section p {
+            font-size: 1vw;
+            opacity: 0.7;
+            color: #00d4ff;
+        }
+
+        .event-info {
+            display: flex;
+            gap: 2vw;
+            font-size: 1.2vw;
+            opacity: 0.8;
+        }
+
+        .event-info span {
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+
+        /* MAIN CONTENT */
+        .content-wrapper {
+            flex: 1;
+            padding: 2vw 3vw;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2vw;
+            overflow: hidden;
+        }
+
+        /* STAT CARDS */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+            border: 0.15vw solid #00d4ff;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-0.3vw);
+            border-color: #00ffff;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 153, 255, 0.1) 100%);
+        }
+
+        .stat-card.featured {
+            grid-column: span 1;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+            border-color: #22c55e;
+        }
+
+        .stat-card.featured:hover {
+            border-color: #4ade80;
+        }
+
+        .stat-label {
+            font-size: 1.1vw;
+            opacity: 0.7;
+            margin-bottom: 0.5vw;
+            text-transform: uppercase;
+            letter-spacing: 0.1vw;
+        }
+
+        .stat-value {
+            font-size: 3.5vw;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.featured .stat-value {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* RANKING PANELS */
+        .ranking-panel {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(20, 30, 48, 0.8) 100%);
+            border: 0.15vw solid #333;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .ranking-panel h3 {
+            font-size: 1.5vw;
+            margin-bottom: 1vw;
+            padding-bottom: 0.7vw;
+            border-bottom: 0.2vw solid #00d4ff;
+            color: #00d4ff;
+        }
+
+        .ranking-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5vw;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6vw 0.8vw;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.4vw;
+            font-size: 1vw;
+            border-left: 0.3vw solid transparent;
+            transition: all 0.2s ease;
+            gap: 1vw;
+        }
+
+        .ranking-item:nth-child(1) {
+            background: rgba(255, 215, 0, 0.1);
+            border-left-color: #ffd700;
+        }
+
+        .ranking-item:nth-child(2) {
+            background: rgba(192, 192, 192, 0.1);
+            border-left-color: #c0c0c0;
+        }
+
+        .ranking-item:nth-child(3) {
+            background: rgba(205, 127, 50, 0.1);
+            border-left-color: #cd7f32;
+        }
+
+        .ranking-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(0.3vw);
+        }
+
+        .ranking-name {
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .ranking-score {
+            text-align: right;
+            font-weight: bold;
+            color: var(--accent-cyan);
+            flex-shrink: 0;
+        }
+
+        /* SCROLLABLE CONTENT */
+        .ranking-list::-webkit-scrollbar {
+            width: 0.4vw;
+        }
+
+        .ranking-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.2vw;
+        }
+
+        .ranking-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 0.2vw;
+        }
+
+        .ranking-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.8);
+        }
+
+        /* TICKER / RUNNING ANNOUNCEMENT */
+        .ticker-bar {
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 20, 40, 0.6) 50%, rgba(0, 0, 0, 0.8) 100%);
+            border-top: 0.2vw solid var(--accent-cyan);
+            border-bottom: 0.2vw solid var(--accent-cyan);
+            padding: 1vw 0;
+            overflow: hidden;
+            height: 5.5vw;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .ticker-content {
+            display: flex;
+            animation: scroll-left 30s linear infinite;
+            gap: 4vw;
+            padding: 0 3vw;
+            font-size: 1.3vw;
+            white-space: nowrap;
+        }
+
+        .ticker-content:hover {
+            animation-play-state: paused;
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+            padding: 0 1.5vw;
+            flex-shrink: 0;
+        }
+
+        .ticker-label {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9vw;
+            letter-spacing: 0.1vw;
+        }
+
+        .ticker-value {
+            color: #22c55e;
+            font-weight: 900;
+            font-size: 1.5vw;
+        }
+
+        .ticker-divider {
+            width: 0.2vw;
+            height: 2.5vw;
+            background: var(--accent-cyan);
+            opacity: 0.5;
+            flex-shrink: 0;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* FOOTER */
+        .footer {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.8vw 3vw;
+            border-top: 0.2vw solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85vw;
+            gap: 2vw;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+        }
+
+        .brand-logo {
+            width: 1.8vw;
+            height: 1.8vw;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 0.3vw;
+            flex-shrink: 0;
+        }
+
+        .footer-center {
+            flex: 1;
+            text-align: center;
+            opacity: 0.6;
+        }
+
+        .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            padding: 0.3vw 0.7vw;
+            border-radius: 0.25vw;
+            font-weight: bold;
+            font-size: 0.8vw;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            border: 0.1vw solid #22c55e;
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            border: 0.1vw solid #ef4444;
+        }
+
+        /* PERFORMANCE METRICS COMPACT */
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4vw;
+        }
+
+        .metric-item {
+            padding: 0.5vw 0.8vw;
+            background: rgba(0, 212, 255, 0.05);
+            border: 0.1vw solid rgba(0, 212, 255, 0.2);
+            border-radius: 0.3vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9vw;
+        }
+
+        .metric-label {
+            opacity: 0.7;
+            font-size: 0.85vw;
+        }
+
+        .metric-value {
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        /* RESPONSIVE BREAKPOINTS */
+        @media (max-width: 2560px) {
+            .content-wrapper {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto auto;
+            }
+
+            .ranking-panel:nth-child(4) {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 1920px) {
+            .stat-value {
+                font-size: 2.8vw;
+            }
+
+            .ranking-panel h3 {
+                font-size: 1.2vw;
+            }
+        }
+
+        @media (max-width: 1080p) {
+            .header {
+                padding: 1vw 2vw;
+            }
+
+            .logo {
+                width: 3vw;
+                height: 3vw;
+            }
+
+            .title-section h1 {
+                font-size: 2vw;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="tv-container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo-section">
+                <div class="logo">◆</div>
+                <div class="title-section">
+                    <h1>Live Event Analytics</h1>
+                    <p>Real-Time Performance Dashboard</p>
+                </div>
+            </div>
+            <div class="event-info">
+                <span>📊 Active Exhibitors</span>
+                <span>🎯 Live Tracking</span>
+                <span>⚡ Updated Hourly</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT GRID -->
+    <div class="content-wrapper">
+
+        <!-- STAT CARDS (Top Row) -->
+        <div class="stat-card">
+            <div class="stat-label">Total Viewers</div>
+            <div class="stat-value">{{ total_viewers }}</div>
+        </div>
+
+        <div class="stat-card featured">
+            <div class="stat-label">Total Votes</div>
+            <div class="stat-value">{{ total_votes }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Visits</div>
+            <div class="stat-value">{{ total_visits }}</div>
+        </div>
+
+        <!-- BOOTH VISITS RANKING -->
+        <div class="ranking-panel">
+            <h3>🏆 Booth Visits Ranking</h3>
+            <div class="ranking-list">
+                {% for row in visit_ranking %}
+                <div class="ranking-item">
+                    <div class="ranking-name">{{ row.exhibitor__name|truncatechars:5|upper }}</div>
+                    <div class="ranking-score">{{ row.total }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- VOTING RANKING -->
+        <div class="ranking-panel">
+            <h3>⭐ Voting Ranking</h3>
+            <div class="ranking-list">
+                {% for row in score_ranking %}
+                <div class="ranking-item">
+                    <div class="ranking-name">{{ row.exhibitor__name|truncatechars:5|upper }}</div>
+                    <div class="ranking-score">{{ row.total_score|default:0 }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- PERFORMANCE METRICS -->
+        <div class="ranking-panel">
+            <h3>📈 Performance Metrics</h3>
+            <div class="performance-metrics">
+                <div class="metric-item">
+                    <span class="metric-label">Avg Duration</span>
+                    <span class="metric-value">3.5 min</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Engagement</span>
+                    <span class="metric-value">87%</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Returning</span>
+                    <span class="metric-value">54%</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Peak Hour</span>
+                    <span class="metric-value">2:00 PM</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Active Now</span>
+                    <span class="metric-value">342</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Bounce Rate</span>
+                    <span class="metric-value">12%</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RUNNING ANNOUNCEMENT TICKER -->
+    <div class="ticker-bar">
+        <div class="ticker-content" id="tickerContent">
+            <!-- Items will be dynamically duplicated for seamless loop -->
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-left">
+            <div class="brand-logo"></div>
+            <span>Exhibit Event System • Premium Analytics Platform</span>
+        </div>
+        <div class="footer-center">
+            © 2024 Event Solutions Inc. | Powered by Advanced Analytics | Credits: Design & Development Team
+        </div>
+        <div class="footer-right">
+            {% if raffle_setting and raffle_setting.is_active %}
+                <span class="status-badge status-active">✓ RAFFLE ACTIVE</span>
+            {% else %}
+                <span class="status-badge status-inactive">✕ RAFFLE OFF</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    const body = document.body;
+
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        body.classList.add('light-mode');
+        themeToggle.textContent = '☀️ Light';
+    }
+
+    themeToggle.addEventListener('click', () => {
+        body.classList.toggle('light-mode');
+        const isLight = body.classList.contains('light-mode');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        themeToggle.textContent = isLight ? '☀️ Light' : '🌙 Dark';
+    });
+
+    // Keyboard shortcut: T for theme toggle
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 't') {
+            themeToggle.click();
+        }
+    });
+
+    // Ticker Content Generator
+    const tickerContent = document.getElementById('tickerContent');
+    const tickerItems = [
+        { label: '⚡ LIVE', value: 'Event is now in progress' },
+        { label: '🎯 ENGAGEMENT', value: 'Vote for your favorite exhibitor' },
+        { label: '🎁 RAFFLE', value: 'RAFFLE ACTIVE - Participate Now!' },
+        { label: '🚀 OPPORTUNITY', value: 'Explore all booths and discover new brands' },
+        { label: '📱 STAY UPDATED', value: 'Auto-refresh every 10 seconds' },
+        { label: '⭐ FEATURED', value: 'Check out top-rated exhibitors today' },
+        { label: '💼 NETWORKING', value: 'Connect with industry leaders now' },
+        { label: '🏆 WINNERS', value: 'Top performers announced hourly' }
+    ];
+
+    function populateTicker() {
+        tickerContent.innerHTML = '';
+        // Render items twice for seamless loop
+        for (let cycle = 0; cycle < 2; cycle++) {
+            tickerItems.forEach((item, index) => {
+                const tickerItem = document.createElement('div');
+                tickerItem.className = 'ticker-item';
+                tickerItem.innerHTML = `
+                    <span class="ticker-label">${item.label}</span>
+                    <span class="ticker-value">${item.value}</span>
+                `;
+                tickerContent.appendChild(tickerItem);
+
+                // Add divider between items (but not at the very end)
+                if (!(cycle === 1 && index === tickerItems.length - 1)) {
+                    const divider = document.createElement('div');
+                    divider.className = 'ticker-divider';
+                    tickerContent.appendChild(divider);
+                }
+            });
+        }
+    }
+
+    populateTicker();
+</script>
+</body>
+</html> {% endcomment %}
+
+
+
+
+
+
+
+{% comment %} <!DOCTYPE html>
+<html data-theme="dark">
+<head>
+    <title>Live Analytics TV Mode</title>
+    <meta http-equiv="refresh" content="10">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --bg-main: linear-gradient(135deg, #0a0f1c 0%, #0f1419 100%);
+            --header-bg: linear-gradient(90deg, #1a1f2e 0%, #16213e 100%);
+            --panel-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(20, 30, 48, 0.8) 100%);
+            --card-bg: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+            --text-color: #ffffff;
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f3f4f6;
+            --header-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --card-bg: #e5e7eb;
+            --text-color: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .tv-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .header {
+            background: var(--header-bg);
+            padding: 1.5vw 3vw;
+            border-bottom: 0.3vw solid #00d4ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+        }
+
+        .logo {
+            width: 4vw;
+            height: 4vw;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border-radius: 0.5vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.8vw;
+            color: #000;
+        }
+
+        .title-section h1 {
+            font-size: 2.5vw;
+            font-weight: 700;
+        }
+
+        .title-section p {
+            font-size: 1vw;
+            opacity: 0.7;
+            color: #00d4ff;
+        }
+
+        .toggle-btn {
+            cursor: pointer;
+            font-size: 1vw;
+            border: 1px solid #00d4ff;
+            padding: .5vw 1vw;
+            border-radius: .5vw;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            padding: 2vw 3vw;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2vw;
+            overflow: hidden;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 0.15vw solid #00d4ff;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 1.1vw;
+            opacity: 0.7;
+        }
+
+        .stat-value {
+            font-size: 3.5vw;
+            font-weight: 900;
+            color: #00d4ff;
+        }
+
+        .ranking-panel {
+            background: var(--panel-bg);
+            border: 0.15vw solid #333;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ranking-panel h3 {
+            font-size: 1.5vw;
+            margin-bottom: 1vw;
+            border-bottom: 0.2vw solid #00d4ff;
+            padding-bottom: .7vw;
+            color: #00d4ff;
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: .5vw;
+        }
+
+        .ranking-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            padding: .8vw;
+            background: rgba(255,255,255,.05);
+            border-radius: .5vw;
+            font-size: 1.1vw;
+        }
+
+        .ranking-score {
+            text-align: right;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: .8vw;
+            font-size: .9vw;
+        }
+
+        .metric-box {
+            background: rgba(255,255,255,.05);
+            padding: .8vw;
+            border-radius: .5vw;
+        }
+
+        .metric-box strong {
+            display:block;
+            margin-top:.4vw;
+            font-size:1.2vw;
+            color:#00d4ff;
+        }
+
+        .footer {
+            background: #000;
+            padding: 1vw 3vw;
+            border-top: .2vw solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: .9vw;
+        }
+
+        .status-active { color:#22c55e; }
+        .status-inactive { color:#ef4444; }
+
+    </style>
+</head>
+
+<body>
+
+<div class="tv-container">
+
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo">◆</div>
+            <div class="title-section">
+                <h1>Live Event Analytics</h1>
+                <p>Real-Time Performance Dashboard</p>
+            </div>
+        </div>
+
+        <div class="toggle-btn" onclick="toggleTheme()">Toggle Theme (T)</div>
+    </div>
+
+    <div class="content-wrapper">
+
+        <!-- Stats -->
+        <div class="stat-card">
+            <div class="stat-label">Total Viewers</div>
+            <div class="stat-value">{{ total_viewers }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Votes</div>
+            <div class="stat-value">{{ total_votes }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Visits</div>
+            <div class="stat-value">{{ total_visits }}</div>
+        </div>
+
+        <!-- Booth Visits -->
+        <div class="ranking-panel">
+            <h3>🏆 Booth Visits Ranking</h3>
+            <div class="ranking-list">
+                {% for row in visit_ranking %}
+                <div class="ranking-item">
+                    <div>{{ row.exhibitor__name|slice:":4"|upper }}</div>
+                    <div class="ranking-score">{{ row.total }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Voting Ranking -->
+        <div class="ranking-panel">
+            <h3>⭐ Voting Ranking</h3>
+            <div class="ranking-list">
+                {% for row in score_ranking %}
+                <div class="ranking-item">
+                    <div>{{ row.exhibitor__name|slice:":4"|upper }}</div>
+                    <div class="ranking-score">{{ row.total_score|default:0 }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Compact Metrics -->
+        <div class="ranking-panel">
+            <h3>📈 Performance Metrics</h3>
+            <div class="metrics-grid">
+                <div class="metric-box">Avg Visit<strong>3.5m</strong></div>
+                <div class="metric-box">Engagement<strong>87%</strong></div>
+                <div class="metric-box">Return Rate<strong>54%</strong></div>
+                <div class="metric-box">Peak Hour<strong>2PM</strong></div>
+                <div class="metric-box">Active Now<strong>342</strong></div>
+                <div class="metric-box">Conversion<strong>68%</strong></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <div>Exhibit Event System • Auto Refresh 10s</div>
+
+        <div>
+            {% if raffle_setting and raffle_setting.is_active %}
+                <span class="status-active">✓ RAFFLE ACTIVE</span>
+            {% else %}
+                <span class="status-inactive">✕ RAFFLE OFF</span>
+            {% endif %}
+        </div>
+
+        <div>© Live Dashboard</div>
+    </div>
+
+</div>
+
+<script>
+function toggleTheme(){
+    const root = document.documentElement;
+    const current = root.getAttribute("data-theme");
+    const next = current === "light" ? "dark" : "light";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("tv-theme", next);
+}
+
+(function(){
+    const saved = localStorage.getItem("tv-theme");
+    if(saved){
+        document.documentElement.setAttribute("data-theme", saved);
+    }
+})();
+
+document.addEventListener("keydown", function(e){
+    if(e.key.toLowerCase() === "t"){
+        toggleTheme();
+    }
+});
+</script>
+
+</body>
+</html> {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} <!DOCTYPE html>
+<html>
+<head>
+    <title>Live Analytics TV Mode</title>
+    <meta http-equiv="refresh" content="10">
+
+    <style>
+        :root {
+            --bg: #0a0f1c;
+            --panel: #111827;
+            --card: #1f2937;
+            --accent: #00d4ff;
+            --text: #ffffff;
+        }
+
+        [data-theme="light"] {
+            --bg: #f3f4f6;
+            --panel: #ffffff;
+            --card: #e5e7eb;
+            --accent: #2563eb;
+            --text: #111827;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height:100vh;
+            overflow:hidden;
+            transition: background .3s ease, color .3s ease;
+        }
+
+        .tv {
+            display:grid;
+            grid-template-rows:90px 1fr 70px;
+            height:100vh;
+        }
+
+        /* HEADER */
+        .header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 60px;
+            background: var(--panel);
+            border-bottom:3px solid var(--accent);
+        }
+
+        .header h1 { font-size:30px; }
+
+        .toggle-btn {
+            padding:6px 12px;
+            border:1px solid var(--accent);
+            border-radius:6px;
+            cursor:pointer;
+            font-size:14px;
+        }
+
+        /* MAIN */
+        .main {
+            display:grid;
+            grid-template-columns:30% 40% 30%;
+            gap:30px;
+            padding:30px 60px;
+        }
+
+        /* LEFT STATS */
+        .stats {
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+        }
+
+        .stat {
+            background: var(--card);
+            padding:30px;
+            border-radius:12px;
+            text-align:center;
+        }
+
+        .stat-label { font-size:16px; opacity:.7; }
+
+        .stat-value {
+            font-size:58px;
+            font-weight:800;
+            margin-top:10px;
+            color: var(--accent);
+        }
+
+        /* PANELS */
+        .panel {
+            background: var(--panel);
+            padding:20px;
+            border-radius:12px;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .panel h2 {
+            font-size:20px;
+            margin-bottom:12px;
+            border-bottom:1px solid #333;
+            padding-bottom:6px;
+            color: var(--accent);
+        }
+
+        .list {
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+
+        .row {
+            display:flex;
+            justify-content:space-between;
+            padding:8px 10px;
+            background: var(--card);
+            border-radius:6px;
+            font-size:18px;
+        }
+
+        /* Compact Metrics */
+        .metrics-grid {
+            display:grid;
+            grid-template-columns:repeat(2, 1fr);
+            gap:10px;
+            font-size:14px;
+        }
+
+        .metric-box {
+            background: var(--card);
+            padding:10px;
+            border-radius:6px;
+            text-align:center;
+        }
+
+        .metric-box span {
+            display:block;
+            font-weight:700;
+            font-size:18px;
+            margin-top:4px;
+            color: var(--accent);
+        }
+
+        /* FOOTER */
+        .footer {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 60px;
+            background: var(--panel);
+            font-size:14px;
+        }
+
+        .raffle-active { color:#22c55e; font-weight:600; }
+        .raffle-off { color:#ef4444; font-weight:600; }
+
+    </style>
+</head>
+
+<body>
+
+<div class="tv">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Live Event Analytics</h1>
+        <div class="toggle-btn" onclick="toggleTheme()">Toggle Theme (T)</div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Total Viewers</div>
+                <div class="stat-value">{{ total_viewers }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Total Visits</div>
+                <div class="stat-value">{{ total_visits }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Total Votes</div>
+                <div class="stat-value">{{ total_votes }}</div>
+            </div>
+        </div>
+
+        <!-- CENTER: Visit Ranking -->
+        <div class="panel">
+            <h2>🏆 Booth Visits Ranking</h2>
+            <div class="list">
+                {% for row in visit_ranking %}
+                <div class="row">
+                    <!-- Display Booth Initials -->
+                    <span>{{ row.exhibitor__name|slice:":4"|upper }}</span>
+                    <span>{{ row.total }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="panel">
+            <h2>⭐ Voting Ranking</h2>
+            <div class="list">
+                {% for row in score_ranking %}
+                <div class="row">
+                    <span>{{ row.exhibitor__name|slice:":4"|upper }}</span>
+                    <span>{{ row.total_score|default:0 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h2 style="margin-top:20px;">📈 Performance Metrics</h2>
+            <div class="metrics-grid">
+                <!-- Temporary test data -->
+                <div class="metric-box">Avg Visit<span>3.5m</span></div>
+                <div class="metric-box">Engagement<span>87%</span></div>
+                <div class="metric-box">Return Rate<span>54%</span></div>
+                <div class="metric-box">Peak Hour<span>2PM</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div>Exhibit Event System • Auto Refresh 10s</div>
+
+        <div>
+            {% if raffle_setting and raffle_setting.is_active %}
+                <span class="raffle-active">RAFFLE ACTIVE</span>
+            {% else %}
+                <span class="raffle-off">RAFFLE OFF</span>
+            {% endif %}
+        </div>
+
+        <div>© Live Dashboard</div>
+    </div>
+
+</div>
+
+<script>
+function toggleTheme(){
+    const root = document.documentElement;
+    const current = root.getAttribute("data-theme");
+    const newTheme = current === "light" ? "dark" : "light";
+    root.setAttribute("data-theme", newTheme);
+    localStorage.setItem("tv-theme", newTheme);
+}
+
+(function(){
+    const saved = localStorage.getItem("tv-theme");
+    if(saved){
+        document.documentElement.setAttribute("data-theme", saved);
+    }
+})();
+
+document.addEventListener("keydown", function(e){
+    if(e.key.toLowerCase() === "t"){
+        toggleTheme();
+    }
+});
+</script>
+
+</body>
+</html> {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+{% comment %} <!DOCTYPE html>
+<html>
+<head>
+    <title>Live Analytics TV Mode</title>
+    <meta http-equiv="refresh" content="10">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0a0f1c 0%, #0f1419 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .tv-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(90deg, #1a1f2e 0%, #16213e 100%);
+            padding: 1.5vw 3vw;
+            border-bottom: 0.3vw solid #00d4ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2vw;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+        }
+
+        .logo {
+            width: 4vw;
+            height: 4vw;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border-radius: 0.5vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.8vw;
+            color: #000;
+        }
+
+        .title-section h1 {
+            font-size: 2.5vw;
+            font-weight: 700;
+            letter-spacing: 0.1vw;
+            margin-bottom: 0.3vw;
+        }
+
+        .title-section p {
+            font-size: 1vw;
+            opacity: 0.7;
+            color: #00d4ff;
+        }
+
+        .event-info {
+            display: flex;
+            gap: 2vw;
+            font-size: 1.2vw;
+            opacity: 0.8;
+        }
+
+        .event-info span {
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+
+        /* MAIN CONTENT */
+        .content-wrapper {
+            flex: 1;
+            padding: 2vw 3vw;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2vw;
+            overflow: hidden;
+        }
+
+        /* STAT CARDS */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+            border: 0.15vw solid #00d4ff;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-0.3vw);
+            border-color: #00ffff;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 153, 255, 0.1) 100%);
+        }
+
+        .stat-card.featured {
+            grid-column: span 1;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+            border-color: #22c55e;
+        }
+
+        .stat-card.featured:hover {
+            border-color: #4ade80;
+        }
+
+        .stat-label {
+            font-size: 1.1vw;
+            opacity: 0.7;
+            margin-bottom: 0.5vw;
+            text-transform: uppercase;
+            letter-spacing: 0.1vw;
+        }
+
+        .stat-value {
+            font-size: 3.5vw;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.featured .stat-value {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* RANKING PANELS */
+        .ranking-panel {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(20, 30, 48, 0.8) 100%);
+            border: 0.15vw solid #333;
+            border-radius: 1vw;
+            padding: 1.5vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .ranking-panel h3 {
+            font-size: 1.5vw;
+            margin-bottom: 1vw;
+            padding-bottom: 0.7vw;
+            border-bottom: 0.2vw solid #00d4ff;
+            color: #00d4ff;
+        }
+
+        .ranking-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5vw;
+        }
+
+        .ranking-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            align-items: center;
+            padding: 0.8vw;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.5vw;
+            font-size: 1.1vw;
+            border-left: 0.3vw solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .ranking-item:nth-child(1) {
+            background: rgba(255, 215, 0, 0.1);
+            border-left-color: #ffd700;
+        }
+
+        .ranking-item:nth-child(2) {
+            background: rgba(192, 192, 192, 0.1);
+            border-left-color: #c0c0c0;
+        }
+
+        .ranking-item:nth-child(3) {
+            background: rgba(205, 127, 50, 0.1);
+            border-left-color: #cd7f32;
+        }
+
+        .ranking-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(0.3vw);
+        }
+
+        .ranking-name {
+            font-weight: 600;
+        }
+
+        .ranking-score {
+            text-align: right;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        /* SCROLLABLE CONTENT */
+        .ranking-list::-webkit-scrollbar {
+            width: 0.4vw;
+        }
+
+        .ranking-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.2vw;
+        }
+
+        .ranking-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 0.2vw;
+        }
+
+        .ranking-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.8);
+        }
+
+        /* TICKER / RUNNING ANNOUNCEMENT */
+        .ticker-bar {
+            background: linear-gradient(90deg, #1a1a1a 0%, #000 50%, #1a1a1a 100%);
+            border-top: 0.2vw solid #00d4ff;
+            border-bottom: 0.2vw solid #00d4ff;
+            padding: 1vw 0;
+            overflow: hidden;
+            height: 6vw;
+            display: flex;
+            align-items: center;
+        }
+
+        .ticker-content {
+            display: flex;
+            animation: scroll-left 25s linear infinite;
+            gap: 3vw;
+            padding: 0 3vw;
+            font-size: 1.3vw;
+            white-space: nowrap;
+        }
+
+        .ticker-content:hover {
+            animation-play-state: paused;
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+            padding: 0 1vw;
+        }
+
+        .ticker-label {
+            color: #00d4ff;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 1vw;
+        }
+
+        .ticker-value {
+            color: #22c55e;
+            font-weight: 900;
+            font-size: 1.8vw;
+        }
+
+        .ticker-divider {
+            width: 0.2vw;
+            height: 3vw;
+            background: #00d4ff;
+            opacity: 0.5;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(100vw);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* FOOTER */
+        .footer {
+            background: #000;
+            padding: 1vw 3vw;
+            border-top: 0.2vw solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9vw;
+            gap: 2vw;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+        }
+
+        .brand-logo {
+            width: 2vw;
+            height: 2vw;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            border-radius: 0.3vw;
+        }
+
+        .footer-center {
+            flex: 1;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+        }
+
+        .status-badge {
+            padding: 0.4vw 0.8vw;
+            border-radius: 0.3vw;
+            font-weight: bold;
+            font-size: 0.85vw;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            border: 0.1vw solid #22c55e;
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            border: 0.1vw solid #ef4444;
+        }
+
+        /* RESPONSIVE BREAKPOINTS */
+        @media (max-width: 2560px) {
+            .content-wrapper {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto auto;
+            }
+
+            .ranking-panel:nth-child(4) {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 1920px) {
+            .stat-value {
+                font-size: 2.8vw;
+            }
+
+            .ranking-panel h3 {
+                font-size: 1.2vw;
+            }
+        }
+
+        @media (max-width: 1080p) {
+            .header {
+                padding: 1vw 2vw;
+            }
+
+            .logo {
+                width: 3vw;
+                height: 3vw;
+            }
+
+            .title-section h1 {
+                font-size: 2vw;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="tv-container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo">◆</div>
+            <div class="title-section">
+                <h1>Live Event Analytics</h1>
+                <p>Real-Time Performance Dashboard</p>
+            </div>
+        </div>
+        <div class="event-info">
+            <span>📊 Active Exhibitors</span>
+            <span>🎯 Live Tracking</span>
+            <span>⚡ Updated Hourly</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT GRID -->
+    <div class="content-wrapper">
+
+        <!-- STAT CARDS (Top Row) -->
+        <div class="stat-card">
+            <div class="stat-label">Total Viewers</div>
+            <div class="stat-value">{{ total_viewers }}</div>
+        </div>
+
+        <div class="stat-card featured">
+            <div class="stat-label">Total Votes</div>
+            <div class="stat-value">{{ total_votes }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Visits</div>
+            <div class="stat-value">{{ total_visits }}</div>
+        </div>
+
+        <!-- BOOTH VISITS RANKING -->
+        <div class="ranking-panel">
+            <h3>🏆 Booth Visits Ranking</h3>
+            <div class="ranking-list">
+                {% for row in visit_ranking %}
+                <div class="ranking-item">
+                    <div class="ranking-name">{{ row.exhibitor__name }}</div>
+                    <div class="ranking-score">{{ row.total }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- VOTING RANKING -->
+        <div class="ranking-panel">
+            <h3>⭐ Voting Ranking</h3>
+            <div class="ranking-list">
+                {% for row in score_ranking %}
+                <div class="ranking-item">
+                    <div class="ranking-name">{{ row.exhibitor__name }}</div>
+                    <div class="ranking-score">{{ row.total_score|default:0 }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ENGAGEMENT METRICS -->
+        <div class="ranking-panel">
+            <h3>📈 Performance Metrics</h3>
+            <div class="ranking-list">
+                <div class="ranking-item">
+                    <div class="ranking-name">Avg Visit Duration</div>
+                    <div class="ranking-score">3.5 min</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-name">Engagement Rate</div>
+                    <div class="ranking-score">87%</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-name">Returning Visitors</div>
+                    <div class="ranking-score">54%</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-name">Peak Hour</div>
+                    <div class="ranking-score">2:00 PM</div>
+                </div>
+                <div class="ranking-item">
+                    <div class="ranking-name">Active Now</div>
+                    <div class="ranking-score">342</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RUNNING ANNOUNCEMENT TICKER -->
+    <div class="ticker-bar">
+        <div class="ticker-content">
+            <div class="ticker-item">
+                <span class="ticker-label">⚡ LIVE</span>
+                <span class="ticker-value">Event is now in progress</span>
+            </div>
+            <div class="ticker-divider"></div>
+            <div class="ticker-item">
+                <span class="ticker-label">🎯 ENGAGEMENT</span>
+                <span class="ticker-value">Vote for your favorite exhibitor</span>
+            </div>
+            <div class="ticker-divider"></div>
+            <div class="ticker-item">
+                <span class="ticker-label">🎁 RAFFLE</span>
+                {% if raffle_setting and raffle_setting.is_active %}
+                    <span class="ticker-value">RAFFLE ACTIVE - Participate Now!</span>
+                {% else %}
+                    <span class="ticker-value">Raffle coming up soon</span>
+                {% endif %}
+            </div>
+            <div class="ticker-divider"></div>
+            <div class="ticker-item">
+                <span class="ticker-label">🚀 OPPORTUNITY</span>
+                <span class="ticker-value">Explore all booths and discover new</span>
+            </div>
+            <div class="ticker-divider"></div>
+            <div class="ticker-item">
+                <span class="ticker-label">📱 STAY UPDATED</span>
+            </div>
+
+            <!-- Duplicate for seamless loop -->
+            <div class="ticker-item">
+                <span class="ticker-label">⚡ LIVE</span>
+                <span class="ticker-value">Event is now in progress</span>
+            </div>
+            <div class="ticker-divider"></div>
+            <div class="ticker-item">
+                <span class="ticker-label">🎯 ENGAGEMENT</span>
+                <span class="ticker-value">Vote for your favorite exhibitor</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="footer-left">
+            <div class="brand-logo"></div>
+            <span>Exhibit Event System • Premium Analytics Platform</span>
+        </div>
+        <div class="footer-center">
+            © 2024 Event Solutions Inc. | Powered by Advanced Analytics | Credits: Design & Development Team
+        </div>
+        <div class="footer-right">
+            {% if raffle_setting and raffle_setting.is_active %}
+                <span class="status-badge status-active">✓ RAFFLE ACTIVE</span>
+            {% else %}
+                <span class="status-badge status-inactive">✕ RAFFLE OFF</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html> {% endcomment %}
+
+
+
+
+
+{% comment %} <!DOCTYPE html>
+<html>
+<head>
+    <title>Live Analytics TV Mode</title>
+    <meta http-equiv="refresh" content="10">
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background:#0a0f1c;
+            color:#fff;
+            height:100vh;
+            overflow:hidden;
+        }
+
+        .tv {
+            display:grid;
+            grid-template-rows:90px 1fr 70px;
+            height:100vh;
+        }
+
+        /* HEADER */
+        .header {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:0 60px;
+            background:#111827;
+            border-bottom:3px solid #00d4ff;
+        }
+
+        .header h1 {
+            font-size:32px;
+            font-weight:700;
+        }
+
+        .header span {
+            font-size:16px;
+            opacity:.7;
+        }
+
+        /* MAIN LAYOUT */
+        .main {
+            display:grid;
+            grid-template-columns:30% 40% 30%;
+            gap:30px;
+            padding:30px 60px;
+        }
+
+        /* LEFT: STATS */
+        .stats {
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+        }
+
+        .stat {
+            background:#1f2937;
+            border-radius:14px;
+            padding:30px;
+            text-align:center;
+        }
+
+        .stat-label {
+            font-size:18px;
+            opacity:.7;
+        }
+
+        .stat-value {
+            font-size:60px;
+            font-weight:800;
+            margin-top:15px;
+            color:#00d4ff;
+        }
+
+        /* PANELS */
+        .panel {
+            background:#111827;
+            border-radius:14px;
+            padding:20px;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .panel h2 {
+            font-size:22px;
+            margin-bottom:15px;
+            border-bottom:1px solid #333;
+            padding-bottom:8px;
+            color:#00d4ff;
+        }
+
+        .list {
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+
+        .row {
+            display:flex;
+            justify-content:space-between;
+            padding:8px 10px;
+            background:#1e293b;
+            border-radius:6px;
+            font-size:18px;
+        }
+
+        .row:nth-child(1) { color:#facc15; }
+        .row:nth-child(2) { color:#cbd5e1; }
+        .row:nth-child(3) { color:#d97706; }
+
+        /* FOOTER */
+        .footer {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 60px;
+            background:#000;
+            font-size:14px;
+        }
+
+        .raffle-active { color:#22c55e; font-weight:600; }
+        .raffle-off { color:#ef4444; font-weight:600; }
+
+        .watermark { opacity:.6; }
+    </style>
+</head>
+
+<body>
+
+<div class="tv">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Live Event Analytics</h1>
+        <span>Auto-refresh every 10 seconds</span>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Total Viewers</div>
+                <div class="stat-value">{{ total_viewers }}</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Total Visits</div>
+                <div class="stat-value">{{ total_visits }}</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Total Votes</div>
+                <div class="stat-value">{{ total_votes }}</div>
+            </div>
+        </div>
+
+        <!-- CENTER -->
+        <div class="panel">
+            <h2>Visit Ranking</h2>
+            <div class="list">
+                {% for row in visit_ranking %}
+                <div class="row">
+                    <span>{{ row.exhibitor__name }}</span>
+                    <span>{{ row.total }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="panel">
+            <h2>Voting Ranking</h2>
+            <div class="list">
+                {% for row in score_ranking %}
+                <div class="row">
+                    <span>{{ row.exhibitor__name }}</span>
+                    <span>{{ row.total_score|default:0 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="watermark">
+            Exhibit Event System • Live Dashboard
+        </div>
+
+        <div>
+            {% if raffle_setting and raffle_setting.is_active %}
+                <span class="raffle-active">RAFFLE ACTIVE</span>
+            {% else %}
+                <span class="raffle-off">RAFFLE OFF</span>
+            {% endif %}
+        </div>
+
+        <div>
+            © Event Analytics Platform
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
+
+
+ {% endcomment %}
+
+
+
+
+{% comment %} <!DOCTYPE html>
+<html>
+<head>
+    <title>Live Analytics</title>
+    <meta http-equiv="refresh" content="10">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0b0f1a;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-rows: auto 1fr 70px;
+            height: 100vh;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 20px 50px;
+            background: #111827;
+            border-bottom: 2px solid #2563eb;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        /* MAIN */
+        .main {
+            display: grid;
+            grid-template-columns: 30% 40% 30%;
+            padding: 30px 50px;
+            gap: 30px;
+        }
+
+        /* LEFT - COUNTS */
+        .counts {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .count-box {
+            background: #1f2937;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .count-label {
+            font-size: 18px;
+            opacity: 0.7;
+        }
+
+        .count-value {
+            font-size: 56px;
+            font-weight: 700;
+            margin-top: 15px;
+        }
+
+        /* CENTER & RIGHT PANELS */
+        .panel {
+            background: #111827;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 18px;
+            border-bottom: 1px solid #222;
+        }
+
+        .row:nth-child(1) { color: #facc15; }
+        .row:nth-child(2) { color: #cbd5e1; }
+        .row:nth-child(3) { color: #d97706; }
+
+        /* FOOTER */
+        .footer {
+            background: #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 50px;
+            font-size: 16px;
+        }
+
+        .raffle-active { color: #22c55e; font-weight: 600; }
+        .raffle-off { color: #ef4444; font-weight: 600; }
+
+        .watermark { opacity: 0.6; }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- HEADER -->
+    <div class="header">
+        Live Event Analytics
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="counts">
+            <div class="count-box">
+                <div class="count-label">Total Viewers</div>
+                <div class="count-value">{{ total_viewers }}</div>
+            </div>
+
+            <div class="count-box">
+                <div class="count-label">Total Visits</div>
+                <div class="count-value">{{ total_visits }}</div>
+            </div>
+
+            <div class="count-box">
+                <div class="count-label">Total Votes</div>
+                <div class="count-value">{{ total_votes }}</div>
+            </div>
+        </div>
+
+        <!-- CENTER -->
+        <div class="panel">
+            <h2>Visit Ranking</h2>
+            <div class="panel-content">
+                {% for row in visit_ranking %}
+                <div class="row">
+                    <span>{{ row.exhibitor__name }}</span>
+                    <span>{{ row.total }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="panel">
+            <h2>Voting Ranking</h2>
+            <div class="panel-content">
+                {% for row in score_ranking %}
+                <div class="row">
+                    <span>{{ row.exhibitor__name }}</span>
+                    <span>{{ row.total_score|default:0 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div class="watermark">
+            Exhibit Event System • Auto refresh 10s
+        </div>
+
+        <div>
+            {% if raffle_setting and raffle_setting.is_active %}
+                <span class="raffle-active">RAFFLE ACTIVE</span>
+            {% else %}
+                <span class="raffle-off">RAFFLE OFF</span>
+            {% endif %}
+        </div>
+
+        <div>
+            © Live Event Dashboard
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
+ {% endcomment %}

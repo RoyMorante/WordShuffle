@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Event System{% endblock %}</title>
+
+    <style>
+    :root {
+        --bg: #f4f6f9;
+        --card: #ffffff;
+        --text: #1a1a1a;
+        --accent: #4f46e5;
+        --border: #e5e7eb;
+        --overlay: rgba(0,0,0,0.4);
+    }
+
+    [data-theme="dark"] {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --text: #f1f5f9;
+        --accent: #6366f1;
+        --border: #334155;
+        --overlay: rgba(0,0,0,0.65);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    /* Top Navigation */
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--accent);
+        color: #fff;
+        padding: 14px 20px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    main {
+        padding: 20px;
+        min-height: calc(100vh - 60px);
+    }
+
+    /* Floating Menu Button */
+    .fab {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        background: var(--accent);
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        z-index: 1000;
+    }
+
+    /* Overlay Menu */
+    .menu-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--overlay);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+    }
+
+    .menu-box {
+        background: var(--card);
+        width: 90%;
+        max-width: 400px;
+        padding: 25px;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .menu-box a,
+    .menu-box button {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .menu-box a:hover,
+    .menu-box button:hover {
+        background: var(--accent);
+        color: #fff;
+    }
+
+    @media (min-width: 992px) {
+        main {
+            padding: 40px 60px;
+        }
+    }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        Exhibit Event System
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Floating Sticky Button -->
+    <button class="fab" onclick="toggleMenu()">☰</button>
+
+    <!-- Overlay Decision Menu -->
+    <div class="menu-overlay" id="menu">
+        <div class="menu-box">
+            <h3>Navigation</h3>
+
+            <a href="/">Home</a>
+            <a href="{% url 'exhibitor_login' %}">Exhibitor/Staff Login</a>
+            <button onclick="toggleTheme()">Toggle Light / Dark</button>
+            <button onclick="toggleMenu()">Close Menu</button>
+        </div>
+    </div>
+
+<script>
+/* Theme Loader */
+(function(){
+    const saved = localStorage.getItem("theme");
+    if(saved){
+        document.documentElement.setAttribute("data-theme", saved);
+    }
+})();
+
+/* Toggle Theme */
+function toggleTheme() {
+    const current = document.documentElement.getAttribute("data-theme");
+    const newTheme = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+}
+
+/* Toggle Menu */
+function toggleMenu() {
+    const menu = document.getElementById("menu");
+    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+}
+</script>
+
+</body>
+</html>

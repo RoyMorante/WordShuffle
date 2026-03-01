@@ -1,0 +1,130 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+.staff-wrapper {
+    max-width: 1000px;
+    margin: auto;
+}
+
+.staff-card {
+    background: var(--card);
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.staff-title {
+    margin-bottom: 24px;
+}
+
+.staff-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+
+@media (min-width: 768px) {
+    .staff-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.staff-action {
+    padding: 22px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 110px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.staff-action:hover {
+    transform: translateY(-3px);
+    opacity: 0.95;
+}
+
+/* Action Colors */
+.action-indigo {
+    background: #4f46e5;
+    color: #fff;
+}
+
+.action-green {
+    background: #16a34a;
+    color: #fff;
+}
+
+.action-yellow {
+    background: #ca8a04;
+    color: #fff;
+}
+
+.action-red {
+    background: #dc2626;
+    color: #fff;
+}
+
+.action-label {
+    font-size: 18px;
+}
+
+.action-sub {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-top: 6px;
+}
+</style>
+
+<div class="staff-wrapper">
+    <div class="staff-card">
+
+        <h2 class="staff-title">Staff Dashboard</h2>
+
+        <div class="staff-grid">
+
+            <a href="/adminpanel/staff/generate-qr/" class="staff-action action-indigo">
+                <div class="action-label">Generate Viewer QR</div>
+                <div class="action-sub">Create QR for non-device users</div>
+            </a>
+
+            <a href="/adminpanel/staff/vote/" class="staff-action action-green">
+                <div class="action-label">Scan & Vote</div>
+                <div class="action-sub">Assist viewers in booth voting</div>
+            </a>
+
+            <a href="/adminpanel/staff/live/" class="staff-action action-yellow">
+                <div class="action-label">Live Dashboard (TV Mode)</div>
+                <div class="action-sub">Display real-time event metrics</div>
+            </a>
+
+            <a href="/adminpanel/staff/raffle-control/" class="staff-action action-red">
+                <div class="action-label">Raffle Control</div>
+                <div class="action-sub">Enable or disable raffle system</div>
+            </a>
+
+            <a href="/adminpanel/staff/retrieve-qr/" class="staff-action action-indigo">
+                <div class="action-label">Retrieve QR</div>
+                <div class="action-sub">View or download QR codes for viewers</div>
+            </a>
+
+            <div class="staff-grid">
+                <a href="/adminpanel/staff/raffle-draw/" class="staff-action action-red">
+                    <div class="action-label">Spin Raffle</div>
+                    <div class="action-sub">Manually spin the raffle wheel</div>
+                </a>
+                <a href="/adminpanel/staff/game-settings/" class="staff-action action-red">
+                    <div class="action-label">Game Settings</div>
+                    <div class="action-sub">Configure game parameters</div>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

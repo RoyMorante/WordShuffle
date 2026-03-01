@@ -1,0 +1,115 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+.dashboard-wrapper {
+    max-width: 700px;
+    margin: auto;
+}
+
+.dashboard-card {
+    background: var(--card);
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.dashboard-title {
+    margin-bottom: 20px;
+}
+
+.metric-box {
+    margin-top: 15px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+}
+
+.metric-label {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.metric-value {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.action-group {
+    margin-top: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.btn-primary {
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-danger {
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #dc2626;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    color: white;
+}
+
+@media (min-width: 768px) {
+    .dashboard-card {
+        padding: 40px;
+    }
+}
+</style>
+
+<div class="dashboard-wrapper">
+
+    <div class="dashboard-card">
+
+        <h2 class="dashboard-title">
+            {{ exhibitor.name }} Dashboard
+        </h2>
+
+        <div class="metric-box">
+            <div class="metric-label">Booth Number</div>
+            <div class="metric-value">{{ exhibitor.booth_number }}</div>
+        </div>
+
+        <div class="metric-box">
+            <div class="metric-label">Total Visitors Scanned</div>
+            <div class="metric-value">{{ total_visits }}</div>
+        </div>
+
+        <div class="action-group">
+            <a href="/exhibitors/scan/" class="btn-primary">
+                Scan Viewer
+            </a>
+
+            <a href="/exhibitors/logout/" class="btn-danger">
+                Logout
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

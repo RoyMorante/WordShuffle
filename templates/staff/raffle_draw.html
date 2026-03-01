@@ -1,0 +1,193 @@
+{% extends 'base/base.html' %}
+{% block content %}
+
+<style>
+/* Wrapper */
+.wheel-wrapper {
+    text-align: center;
+    padding: 30px 20px;
+}
+
+/* Title */
+.wheel-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+/* Wheel Container */
+.wheel-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Pointer */
+.pointer {
+    position: absolute;
+    top: -10px;
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 25px solid #ef4444;
+    z-index: 10;
+}
+
+/* Wheel */
+#wheel {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    border: 8px solid #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 22px;
+    color: white;
+    background: conic-gradient(
+        #6366f1 0deg 60deg,
+        #22c55e 60deg 120deg,
+        #f59e0b 120deg 180deg,
+        #ef4444 180deg 240deg,
+        #3b82f6 240deg 300deg,
+        #a855f7 300deg 360deg
+    );
+    transition: transform 4s cubic-bezier(.17,.67,.83,.67);
+}
+
+/* Dark mode */
+[data-theme="dark"] #wheel {
+    border-color: #818cf8;
+}
+
+/* Button */
+.spin-btn {
+    margin-top: 30px;
+    padding: 12px 30px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    background: #4f46e5;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.spin-btn:hover {
+    background: #4338ca;
+}
+
+/* Winner */
+.winner-text {
+    margin-top: 35px;
+    font-size: 26px;
+    font-weight: bold;
+    color: #16a34a;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    #wheel {
+        width: 200px;
+        height: 200px;
+        font-size: 18px;
+    }
+}
+</style>
+
+<div class="wheel-wrapper">
+
+    <h2 class="wheel-title">🎡 Raffle Wheel</h2>
+
+    <div class="wheel-container">
+        <div class="pointer"></div>
+        <div id="wheel">SPIN</div>
+    </div>
+
+    <button onclick="spinWheel()" class="spin-btn">
+        Spin
+    </button>
+
+    <div id="winner" class="winner-text"></div>
+
+    <div class="mt-10">
+    <h3 class="text-xl font-bold">Winners Ranking</h3>
+
+    <div id="rankingList" class="mt-4">
+            {% for winner in winners %}
+                <div class="text-lg mt-2">
+                    🏆 Rank {{ winner.rank }} -
+                    {{ winner.raffle_entry.viewer.full_name }}
+                </div>
+            {% empty %}
+                <div class="text-gray-400">
+                    No winners yet
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <br>
+    <br>
+
+    <a href="/adminpanel/staff/dashboard/" class="btn btn-primary">
+        Back to Dashboard
+    </a>
+
+</div>
+
+<script>
+let spinning = false;
+let currentRotation = 0;
+
+function spinWheel() {
+
+    if (spinning) return;
+    spinning = true;
+
+    const wheel = document.getElementById("wheel");
+    const winnerDiv = document.getElementById("winner");
+
+    fetch('/adminpanel/staff/raffle-spin/')
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.error) {
+                winnerDiv.innerHTML = data.error;
+                spinning = false;
+                return;
+            }
+
+            const randomDegree = 3600 + Math.floor(Math.random() * 360);
+            wheel.style.transform = `rotate(${randomDegree}deg)`;
+
+            setTimeout(() => {
+
+                winnerDiv.innerHTML =
+                    "🥇 Rank " + data.rank + ": " + data.winner_name;
+
+                const rankingList = document.getElementById("rankingList");
+
+                const newEntry = document.createElement("div");
+                newEntry.className = "text-lg mt-2";
+                newEntry.innerHTML =
+                    "🏆 Rank " + data.rank + " - " + data.winner_name;
+
+                rankingList.appendChild(newEntry);
+
+                spinning = false;
+
+            }, 4000);
+        })
+        .catch(() => {
+            winnerDiv.innerHTML = "Error spinning raffle.";
+            spinning = false;
+        });
+}
+</script>
+
+{% endblock %}

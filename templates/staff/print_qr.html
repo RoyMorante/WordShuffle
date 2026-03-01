@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Print QR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f4f6f9;
+            text-align: center;
+        }
+
+        .print-wrapper {
+            display: flex;
+            justify-content: center;
+        }
+
+        .qr-card {
+            width: 320px;
+            padding: 24px;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            border: 1px solid #ddd;
+        }
+
+        .event-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .viewer-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .viewer-email {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-bottom: 16px;
+            word-break: break-word;
+        }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+        }
+
+        .qr-note {
+            font-size: 12px;
+            margin-top: 12px;
+            opacity: 0.6;
+            text-align: center;
+        }
+
+        .actions {
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-print {
+            background: #111;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #ddd;
+            color: #000;
+            margin-left: 10px;
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .actions {
+                display: none;
+            }
+
+            .qr-card {
+                box-shadow: none;
+                border: 2px solid #000;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="print-wrapper">
+    <div class="qr-card">
+
+        <div class="event-title">
+            Exhibit Event System
+        </div>
+
+        <div class="viewer-name">
+            {{ viewer.full_name }}
+        </div>
+
+        <div class="viewer-email">
+            {{ viewer.email }}
+        </div>
+
+        <div id="qrcode"></div>
+
+        <div class="qr-note">
+            Present this QR code for booth visits and voting access.
+        </div>
+
+    </div>
+</div>
+
+<div class="actions">
+    <button onclick="window.print()" class="btn btn-print">
+        Print
+    </button>
+
+    <a href="/adminpanel/staff/generate-qr/" class="btn btn-secondary">
+        Register Another
+    </a>
+    <a href="/adminpanel/staff/dashboard/" class="btn btn-primary">
+        Back to Dashboard
+    </a>
+</div>
+
+<script>
+new QRCode(document.getElementById("qrcode"), {
+    text: "{{ viewer.qr_token }}",
+    width: 200,
+    height: 200,
+    correctLevel: QRCode.CorrectLevel.H
+});
+</script>
+
+</body>
+</html>
