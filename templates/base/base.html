@@ -168,6 +168,18 @@ function toggleMenu() {
     const menu = document.getElementById("menu");
     menu.style.display = menu.style.display === "flex" ? "none" : "flex";
 }
+
+
+function generateDeviceID() {
+    return btoa(
+        navigator.userAgent +
+        screen.width +
+        screen.height +
+        Intl.DateTimeFormat().resolvedOptions().timeZone
+    );
+}
+
+
 </script>
 
 </body>

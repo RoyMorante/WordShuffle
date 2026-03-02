@@ -116,7 +116,11 @@
             <div class="raffle-box raffle-success">
                 <strong>Eligible for Raffle Draw</strong>
                 <div>You have met the participation requirements.</div>
-                <a href="" class="btn-primary">Enter Raffle Draw</a>
+                {% if raffle_mode == "draw" %}
+                    <a href="/raffle/draw" class="btn-primary">Enter Raffle Draw</a>
+                {% elif raffle_mode == "game" %}
+                    <a href="/raffle/game" class="btn-primary">Enter Raffle Game</a>
+                {% endif %}
             </div>
         {% else %}
             <div class="raffle-box raffle-fail">

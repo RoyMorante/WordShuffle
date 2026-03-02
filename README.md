@@ -4,6 +4,18 @@
 - No Ui Framework
 - Pull before Push
 
+
+
+# Run using sslserver
+
+    `python manage.py runsslserver ip_address:port`
+
+example:
+
+    `python manage.py runsslserver https://192.168.68.117:8000/`
+
+!!!https
+
 Users:
 
 # /admin/

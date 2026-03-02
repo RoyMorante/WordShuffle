@@ -155,22 +155,37 @@ button:hover {
             <input name="department" placeholder="Department">
 
             <button type="submit">Register</button>
+            <a href="/viewers/login/">Already Registered? enter your dashboard</a>
         </form>
     </div>
 </div>
 
 
 <script>
-function generateDeviceID() {
-    return btoa(
-        navigator.userAgent +
-        screen.width +
-        screen.height +
-        Intl.DateTimeFormat().resolvedOptions().timeZone
-    );
-}
-document.getElementById('device_id').value = generateDeviceID();
 
+
+
+window.onload = function() {
+
+    document.getElementById('device_id').value = generateDeviceID();
+
+    const deviceID = generateDeviceID();
+
+    fetch('/viewer/auto-login/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: 'device_id=' + deviceID
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'found') {
+            window.location.href = "/";
+        }
+    });
+}
 
 </script>
 

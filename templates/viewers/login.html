@@ -1,0 +1,12 @@
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="device_id" id="device_id">
+
+    <input type="email" name="email" placeholder="Enter email" required>
+
+    <button type="submit">Login</button>
+</form>
+
+<script>
+document.getElementById("device_id").value = generateDeviceID();
+</script>

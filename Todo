@@ -2,4 +2,6 @@ Design (minimalist, compact css, optimized for performance/speed)
 Alerts Message (e.g. Already Voted - when click the button vote)
 Validations
 Game
-TV Display
+    - When enter raffle game (display all available games)
+        - when click a game (start/play)
+TV Display (enhancement)
