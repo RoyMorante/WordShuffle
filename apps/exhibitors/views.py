@@ -1,9 +1,9 @@
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 from apps.events.models import Event
 from .models import Exhibitor
-from django.contrib.auth import authenticate, login
 
 def unified_login(request):
 
@@ -30,6 +30,12 @@ def unified_login(request):
         })
 
     return render(request, 'exhibitors/login.html')
+
+
+def exhibitor_logout(request):
+    """Logout exhibitor/staff and clear session."""
+    logout(request)
+    return redirect('exhibitor_login')
 
 
 @login_required

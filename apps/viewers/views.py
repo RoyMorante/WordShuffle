@@ -28,6 +28,14 @@ def auto_login(request):
     return JsonResponse({'status': 'not_found'})
 
 
+def viewer_logout(request):
+    """Logout the current viewer and clear session."""
+    # Set a flag to prevent auto-login on next page load
+    response = redirect('viewer_register')
+    response.set_cookie('just_logged_out', 'true', max_age=60)  # 60 seconds
+    request.session.flush()
+    return response
+
 
 def viewer_dashboard(request):
 
@@ -114,16 +122,15 @@ def viewer_login(request):
                 'error': 'Email not found'
             })
 
-        if viewer.device_identifier == device_id:
-            request.session.flush()
-            request.session['viewer_id'] = viewer.id
-            return redirect('viewer_dashboard')
-
-        # Device mismatch → safer handling
-        # return render(request, 'viewers/login.html', {
-        #     'error': 'This email is registered on another device. Contact staff.'
-        # })
+        # Clear session and login with this email (allow login even with different device_id)
+        request.session.flush()
+        request.session['viewer_id'] = viewer.id
         
-        return redirect('viewer_register')  # Device mismatch → redirect to re-registration
+        # Update device_id if different (allows multi-device login)
+        if viewer.device_identifier != device_id:
+            viewer.device_identifier = device_id
+            viewer.save()
+        
+        return redirect('viewer_dashboard')
 
     return render(request, 'viewers/login.html')

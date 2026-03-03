@@ -1,0 +1,483 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Game Settings - Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="staff-container">
+    <div class="staff-header">
+        <h1>Game Settings Management</h1>
+        <p class="subtitle">Manage game configurations and availability</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    {% if event %}
+    <div class="event-info">
+        <strong>Event:</strong> {{ event.name }}
+        <span class="event-dates">{{ event.start_date|date:"M d, Y" }} - {{ event.end_date|date:"M d, Y" }}</span>
+    </div>
+    {% endif %}
+
+    {% if games_data %}
+    <div class="games-grid">
+        {% for item in games_data %}
+        <div class="game-card">
+            <div class="game-card-header">
+                    <h3>{{ item.game.title }}</h3>
+
+            <div class="game-card-body">
+                <div class="game-info">
+                    <div class="info-item">
+                        <label>Status:</label>
+                        <span class="status-badge {% if item.game.is_active %}active{% else %}inactive{% endif %}">
+                            {{ item.status }}
+                        </span>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Description:</label>
+                        <p>{{ item.game.description|default:"No description" }}</p>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Difficulty Levels:</label>
+                        <div class="levels-list">
+                            {% for level in item.levels %}
+                            <div class="level-item">
+                                <span class="level-name">{{ level.name }}</span>
+                                <span class="level-time">Time: {{ level.time_limit_seconds }}s</span>
+                            </div>
+                            {% empty %}
+                            <p class="empty-message">No difficulty levels configured</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Content:</label>
+                        <div class="content-stats">
+                            <span class="stat">{{ item.content_count }} words/questions</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-card-actions">
+                    <button class="btn btn-toggle-status" 
+                            data-game-id="{{ item.game.id }}"
+                            data-game-name="{{ item.game.title|escapejs }}"
+                            title="Toggle game active status">
+                        {% if item.game.is_active %}
+                        ✓ Active
+                        {% else %}
+                        ✗ Inactive
+                        {% endif %}
+                    </button>
+
+                    <a href="{% url 'manage_game_content' item.game.id %}" class="btn btn-primary">
+                        Manage Content
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="alert alert-info">
+        No games found for this event. Create games using Django admin or management commands.
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+    .staff-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .staff-header {
+        margin-bottom: 30px;
+    }
+
+    .staff-header h1 {
+        font-size: 32px;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+        color: #1a73e8;
+    }
+
+    .subtitle {
+        color: #666;
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .event-info {
+        background: #f0f7ff;
+        border-left: 4px solid #1a73e8;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .event-dates {
+        float: right;
+        color: #666;
+    }
+
+    .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .game-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .game-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .game-card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .game-card-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .game-type-badge {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .game-card-body {
+        padding: 20px;
+    }
+
+    .game-info {
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        margin-bottom: 16px;
+    }
+
+    .info-item label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+
+    .info-item p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .levels-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .level-item {
+        background: #f5f5f5;
+        padding: 8px 12px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+    }
+
+    .level-name {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .level-time {
+        color: #666;
+    }
+
+    .empty-message {
+        color: #999;
+        font-size: 13px;
+        font-style: italic;
+        margin: 0;
+    }
+
+    .content-stats {
+        display: flex;
+        gap: 12px;
+    }
+
+    .stat {
+        background: #e8f0ff;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #1a73e8;
+        font-weight: 500;
+    }
+
+    .game-card-actions {
+        display: flex;
+        gap: 10px;
+        padding-top: 16px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .btn-toggle-status {
+        flex: 1;
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
+
+    .btn-toggle-status:hover {
+        background: #ffe69c;
+    }
+
+    .btn-primary {
+        flex: 1;
+        background: #1a73e8;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1557c0;
+    }
+
+    .alert {
+        padding: 14px 16px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    @media (max-width: 768px) {
+        .games-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .game-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .game-type-badge {
+            align-self: flex-start;
+        }
+
+        .event-dates {
+            float: none;
+            display: block;
+            margin-top: 5px;
+        }
+    }
+
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .success-message {
+        animation: slideDown 0.3s ease forwards;
+    }
+
+    @keyframes slideDown {
+        from {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+    }
+</style>
+
+<script>
+function getCsrfToken() {
+    // Try to get from hidden input
+    const input = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (input) return input.value;
+    
+    // Try to get from meta tag
+    const meta = document.querySelector('[name="csrf-token"]');
+    if (meta) return meta.getAttribute('content');
+    
+    // Default fallback
+    return '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-toggle-status').forEach(button => {
+        button.addEventListener('click', function() {
+            const gameId = this.getAttribute('data-game-id');
+            const gameName = this.getAttribute('data-game-name');
+            toggleGameStatus(gameId, gameName, this);
+        });
+    });
+});
+
+async function toggleGameStatus(gameId, gameName, button) {
+    try {
+        button.classList.add('loading');
+        
+        const response = await fetch('{% url "toggle_game_status" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({
+                game_id: gameId,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update button text
+            button.textContent = data.is_active ? '✓ Active' : '✗ Inactive';
+
+            // Update badge color
+            const badge = button.closest('.game-card').querySelector('.status-badge');
+            badge.className = 'status-badge ' + (data.is_active ? 'active' : 'inactive');
+            badge.textContent = data.is_active ? '✓ Active' : '✗ Inactive';
+
+            // Show success message
+            showNotification(
+                `${gameName} is now ${data.is_active ? 'active' : 'inactive'}`,
+                'success'
+            );
+        } else {
+            throw new Error(data.error || 'Unknown error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to update game status: ' + error.message, 'error');
+    } finally {
+        button.classList.remove('loading');
+    }
+}
+
+function showNotification(message, type) {
+    // Create a simple notification (you can enhance this)
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 16px;
+        background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+        color: ${type === 'success' ? '#155724' : '#721c24'};
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+        animation: slideDown 0.3s ease forwards;
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease forwards';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

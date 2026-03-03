@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'apps.visits',
     'apps.voting',
     'apps.raffle',
+    'games',
 ]
 
 MIDDLEWARE = [

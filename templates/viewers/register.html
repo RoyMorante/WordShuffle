@@ -169,6 +169,22 @@ window.onload = function() {
 
     document.getElementById('device_id').value = generateDeviceID();
 
+    // Check if user just logged out (using cookie)
+    const cookies = document.cookie.split(';');
+    let justLoggedOut = false;
+    
+    for (let cookie of cookies) {
+        if (cookie.trim().startsWith('just_logged_out=')) {
+            justLoggedOut = true;
+            break;
+        }
+    }
+    
+    if (justLoggedOut) {
+        // Don't auto-login, user just logged out
+        return;
+    }
+
     const deviceID = generateDeviceID();
 
     fetch('/viewer/auto-login/', {

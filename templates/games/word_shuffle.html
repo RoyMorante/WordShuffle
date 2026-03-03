@@ -1,0 +1,1057 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Word Shuffle Game{% endblock %}
+
+{% block content %}
+<div class="game-wrapper">
+    <!-- Game Background -->
+    <div class="game-bg-accent"></div>
+    
+    <div class="container game-container">
+        <!-- Game Header with Stats -->
+        <div class="game-header-section">
+            <div class="game-header">
+                <div class="header-content">
+                    <h1 class="game-title">🎮 Word Shuffle</h1>
+                    <p class="game-subtitle">Unscramble the letters and find the correct word!</p>
+                </div>
+                
+                <!-- Game Stats Bar -->
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-label">Level:</span>
+                        <span id="levelName" class="stat-value stat-badge">Medium</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Time Remaining:</span>
+                        <span id="timeLeft" class="stat-value stat-timer">60s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="main-game-area">
+            <!-- Game Content -->
+            <div id="gameContent" class="game-screen" style="display: none;">
+                <div class="game-card-main">
+                    <!-- Word Challenge Section -->
+                    <div class="challenge-section">
+                        <h2 class="challenge-title">Unscramble This Word:</h2>
+                        <div class="shuffled-word-container">
+                            <div class="shuffled-word" id="shuffledWord">
+                                <!-- Shuffled letters will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Section -->
+                    <div class="input-section">
+                        <div class="form-group">
+                            <input 
+                                type="text" 
+                                id="answerInput" 
+                                class="answer-input" 
+                                placeholder="Type your answer (press Enter or click Submit)..."
+                                autocomplete="off"
+                                autofocus
+                            >
+                            <small class="input-hint">💡 Tip: Answer must be in UPPERCASE</small>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button 
+                            type="button" 
+                            id="submitBtn" 
+                            class="btn btn-submit btn-block"
+                            onclick="submitAnswer()"
+                        >
+                            <span class="btn-icon">✓</span> SUBMIT ANSWER
+                        </button>
+                    </div>
+
+                    <!-- Scoring Guide -->
+                    <div class="scoring-guide">
+                        <h6 class="guide-title">📊 How You Earn Points:</h6>
+                        <div class="scoring-items">
+                            <div class="scoring-item correct">
+                                <span class="score-icon">✓</span>
+                                <div class="score-text">
+                                    <strong>Correct Answer:</strong>
+                                    <span class="score-points">+10 pts</span>
+                                </div>
+                            </div>
+                            <div class="scoring-item bonus">
+                                <span class="score-icon">⚡</span>
+                                <div class="score-text">
+                                    <strong>Speed Bonus:</strong>
+                                    <span class="score-points">+2 pts (answered in ≤50% of time)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingContent" class="game-screen active">
+                <div class="loading-container">
+                    <div class="spinner-custom"></div>
+                    <p class="loading-text">Loading your word challenge...</p>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div id="resultContent" class="game-screen" style="display: none;">
+                <div id="resultCard" class="result-card">
+                    <div class="result-header">
+                        <h2 id="resultTitle" class="result-title"></h2>
+                    </div>
+                    <div class="result-body">
+                        <p id="resultMessage" class="result-message"></p>
+                        <div class="result-score-box">
+                            <div class="score-item">
+                                <span class="score-label">Your Score This Round:</span>
+                                <div class="score-display">
+                                    <span id="resultScore" class="score-value">0</span>
+                                    <span class="score-unit">points</span>
+                                </div>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">Time Taken:</span>
+                                <div class="score-display">
+                                    <span id="resultTime" class="score-value time-value">0</span>
+                                    <span class="score-unit">seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+                    <button 
+                        type="button" 
+                        class="btn btn-end"
+                        onclick="endGame()"
+                    >
+                        <span class="btn-icon">←</span> Back to Dashboard
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaderboard Screen -->
+            <div id="leaderboardCard" class="game-screen" style="display: none;">
+                <div class="leaderboard-container">
+                    <div class="leaderboard-header">
+                        <h2 class="leaderboard-title">🏆 Game Leaderboard</h2>
+                        <p class="leaderboard-subtitle">Top performers this session</p>
+                    </div>
+
+                    <div class="leaderboard-table-wrapper">
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th class="rank-col">#</th>
+                                    <th class="name-col">Player Name</th>
+                                    <th class="score-col">Score</th>
+                                    <th class="words-col">Words</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardBody">
+                                <!-- Leaderboard entries will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="leaderboard-actions">
+                        <a href="/raffle/games/" class="btn btn-back">
+                            <span class="btn-icon">←</span> Back to Games
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Game Wrapper & Global Styles */
+    .game-wrapper {
+        background: #ffffff;
+        min-height: 100vh;
+        padding: 20px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .game-bg-accent {
+        display: none;
+    }
+
+    .game-container {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+    }
+
+    /* Header Section */
+    .game-header-section {
+        margin-bottom: 40px;
+        animation: slideDown 0.6s ease-out;
+    }
+
+    .game-header {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        border-bottom: 3px solid #2d7a3e;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .header-content {
+        margin-bottom: 20px;
+    }
+
+    .game-title {
+        font-size: 2.5rem;
+        color: #2d7a3e;
+        margin-bottom: 8px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .game-subtitle {
+        color: #888;
+        font-size: 1.1rem;
+        margin-bottom: 0;
+        font-weight: 400;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        padding-top: 15px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .stat-label {
+        color: #888;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .stat-value {
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 1.05rem;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-badge {
+        background: #2d7a3e;
+        color: white;
+    }
+
+    .stat-timer {
+        background: #d4af37;
+        color: #2d7a3e;
+        min-width: 80px;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .stat-timer.critical {
+        animation: pulse 0.6s infinite;
+    }
+
+    /* Main Game Area */
+    .main-game-area {
+        min-height: 400px;
+    }
+
+    .game-screen {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .game-screen.active {
+        display: block !important;
+    }
+
+    /* Game Card Main */
+    .game-card-main {
+        background: white;
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        animation: slideUp 0.6s ease-out;
+    }
+
+    /* Challenge Section */
+    .challenge-section {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .challenge-title {
+        color: #2d7a3e;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        letter-spacing: 0.3px;
+    }
+
+    .shuffled-word-container {
+        padding: 30px;
+        background: #f5f8f7;
+        border: 2px solid #2d7a3e;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .shuffled-word {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #2d7a3e;
+        letter-spacing: 10px;
+        word-spacing: 15px;
+        line-height: 1.4;
+        user-select: none;
+        font-family: 'Courier New', monospace;
+    }
+
+    @media (max-width: 768px) {
+        .shuffled-word {
+            font-size: 2.5rem;
+            letter-spacing: 6px;
+            word-spacing: 10px;
+        }
+    }
+
+    /* Input Section */
+    .input-section {
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .answer-input {
+        width: 100%;
+        padding: 16px 18px;
+        font-size: 1.15rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 1px;
+        font-family: 'Courier New', monospace;
+    }
+
+    .answer-input:focus {
+        outline: none;
+        border-color: #2d7a3e;
+        box-shadow: 0 0 0 3px rgba(45, 122, 62, 0.08);
+        background: #f5f8f7;
+    }
+
+    .input-hint {
+        color: #999;
+        font-size: 0.9rem;
+        margin-top: 8px;
+        display: block;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        font-size: 1.2rem;
+    }
+
+    .btn-submit {
+        background: #2d7a3e;
+        color: white;
+        width: 100%;
+        padding: 16px;
+        font-size: 1.1rem;
+        box-shadow: 0 2px 6px rgba(45, 122, 62, 0.2);
+    }
+
+    .btn-submit:hover {
+        background: #1f5a2d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(45, 122, 62, 0.3);
+    }
+
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+
+    .btn-block {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-next {
+        background: #2d7a3e;
+        color: white;
+        box-shadow: 0 2px 6px rgba(45, 122, 62, 0.2);
+    }
+
+    .btn-next:hover {
+        background: #1f5a2d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(45, 122, 62, 0.3);
+    }
+
+    .btn-end {
+        background: #d4af37;
+        color: #2d7a3e;
+        box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2);
+        font-weight: 700;
+    }
+
+    .btn-end:hover {
+        background: #c9a02d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+    }
+
+    .btn-back {
+        background: #2d7a3e;
+        color: white;
+        box-shadow: 0 2px 6px rgba(45, 122, 62, 0.2);
+    }
+
+    .btn-back:hover {
+        background: #1f5a2d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(45, 122, 62, 0.3);
+    }
+
+    /* Scoring Guide */
+    .scoring-guide {
+        background: #f5f8f7;
+        border: 2px solid #2d7a3e;
+        border-radius: 8px;
+        padding: 20px;
+    }
+
+    .guide-title {
+        color: #2d7a3e;
+        font-weight: 600;
+        margin-bottom: 15px;
+        font-size: 1rem;
+    }
+
+    .scoring-items {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .scoring-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px;
+        border-radius: 6px;
+        background: white;
+    }
+
+    .score-icon {
+        font-size: 1.3rem;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .score-text {
+        flex: 1;
+    }
+
+    .score-text strong {
+        color: #2d7a3e;
+        display: block;
+    }
+
+    .score-points {
+        color: #d4af37;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* Loading State */
+    .loading-container {
+        text-align: center;
+        padding: 60px 30px;
+    }
+
+    .spinner-custom {
+        width: 60px;
+        height: 60px;
+        border: 4px solid #f0f0f0;
+        border-top-color: #2d7a3e;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+        color: #2d7a3e;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    /* Result Card */
+    .result-card {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        margin-bottom: 30px;
+        animation: scoreReveal 0.6s ease-out;
+    }
+
+    .result-card.success {
+        background: #f0f9f6;
+        border: 2px solid #2d7a3e;
+    }
+
+    .result-card.error {
+        background: #fff3f3;
+        border: 2px solid #d32f2f;
+    }
+
+    .result-header {
+        padding: 25px;
+        background: #f5f8f7;
+        border-bottom: 2px solid #2d7a3e;
+    }
+
+    .result-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0;
+        letter-spacing: 0.5px;
+        color: #2d7a3e;
+    }
+
+    .result-body {
+        padding: 30px;
+    }
+
+    .result-message {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        line-height: 1.6;
+        color: #333;
+    }
+
+    .result-score-box {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        background: #f5f8f7;
+        border-radius: 6px;
+        margin-top: 15px;
+    }
+
+    .score-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .score-display {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .score-label {
+        color: #888;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .score-value {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #d4af37;
+        line-height: 1;
+    }
+
+    .time-value {
+        color: #2d7a3e;
+    }
+
+    .score-unit {
+        color: #999;
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 0.85rem;
+    }
+
+    /* Result Actions */
+    .result-actions {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .result-actions .btn {
+        flex: 1;
+        min-width: 200px;
+        justify-content: center;
+    }
+
+    /* Leaderboard */
+    .leaderboard-container {
+        background: white;
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .leaderboard-header {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 3px solid #2d7a3e;
+        padding-bottom: 20px;
+    }
+
+    .leaderboard-title {
+        color: #2d7a3e;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .leaderboard-subtitle {
+        color: #999;
+        font-size: 1rem;
+    }
+
+    .leaderboard-table-wrapper {
+        overflow-x: auto;
+        margin-bottom: 30px;
+    }
+
+    .leaderboard-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .leaderboard-table thead {
+        background: #2d7a3e;
+        color: white;
+    }
+
+    .leaderboard-table th {
+        padding: 15px;
+        font-weight: 600;
+        text-align: left;
+        letter-spacing: 0.3px;
+    }
+
+    .leaderboard-table td {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .leaderboard-table tbody tr:hover {
+        background: #f5f8f7;
+    }
+
+    .rank-col {
+        text-align: center;
+        width: 60px;
+    }
+
+    .name-col {
+        flex: 2;
+    }
+
+    .score-col {
+        text-align: center;
+        width: 100px;
+    }
+
+    .words-col {
+        text-align: center;
+        width: 100px;
+    }
+
+    .leaderboard-table tbody td:first-child {
+        font-weight: 700;
+        color: #d4af37;
+        text-align: center;
+    }
+
+    .leaderboard-table tbody strong {
+        color: #2d7a3e;
+        font-weight: 700;
+    }
+
+    .leaderboard-actions {
+        text-align: center;
+    }
+
+    /* Animations */
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    @keyframes scoreReveal {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .game-wrapper {
+            padding: 15px 0;
+        }
+
+        .game-header {
+            padding: 20px;
+        }
+
+        .game-title {
+            font-size: 1.8rem;
+        }
+
+        .game-subtitle {
+            font-size: 1rem;
+        }
+
+        .game-card-main {
+            padding: 25px;
+        }
+
+        .stats-bar {
+            flex-direction: column;
+        }
+
+        .stat-item {
+            width: 100%;
+        }
+
+        .result-actions .btn {
+            min-width: 150px;
+        }
+
+        .result-score-box {
+            grid-template-columns: 1fr;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px 8px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<script>
+    // Game Variables
+    let currentGameConfig = {
+        game_config_id: null,
+        level_id: null,
+        viewer_id: null,
+    };
+    
+    let gameState = {
+        shuffledWord: '',
+        correctWord: '',
+        timeLeft: 60,
+        timeLimit: 60,
+        startTime: null,
+        isAnswerSubmitted: false,
+        timeSpent: 0,
+    };
+    
+    let timerInterval = null;
+
+    // Initialize Game
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get game parameters from URL or session
+        const urlParams = new URLSearchParams(window.location.search);
+        currentGameConfig.game_config_id = urlParams.get('game_config_id') || 1;
+        currentGameConfig.level_id = urlParams.get('level_id') || 1;
+        currentGameConfig.viewer_id = urlParams.get('viewer_id') || 1;
+        
+        // Allow Enter key to submit
+        document.getElementById('answerInput')?.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                submitAnswer();
+            }
+        });
+        
+        startGame();
+    });
+
+    function startGame() {
+        document.getElementById('gameContent').style.display = 'none';
+        document.getElementById('resultContent').style.display = 'none';
+        document.getElementById('leaderboardCard').style.display = 'none';
+        document.getElementById('loadingContent').style.display = 'block';
+        
+        fetch(`/games/word-shuffle/start/?game_config_id=${currentGameConfig.game_config_id}&level_id=${currentGameConfig.level_id}&viewer_id=${currentGameConfig.viewer_id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    gameState.shuffledWord = data.game_session.shuffled_word;
+                    gameState.correctWord = data.session_data.correct_word;
+                    gameState.timeLimit = data.game_session.time_limit;
+                    gameState.timeLeft = data.game_session.time_limit;
+                    gameState.startTime = Date.now();
+                    gameState.isAnswerSubmitted = false;
+                    
+                    // Display game
+                    document.getElementById('levelName').textContent = data.game_session.level_name;
+                    document.getElementById('shuffledWord').textContent = data.game_session.shuffled_word;
+                    document.getElementById('answerInput').value = '';
+                    document.getElementById('answerInput').disabled = false;
+                    document.getElementById('submitBtn').disabled = false;
+                    document.getElementById('answerInput').focus();
+                    
+                    document.getElementById('loadingContent').style.display = 'none';
+                    document.getElementById('gameContent').style.display = 'block';
+                    document.getElementById('resultContent').style.display = 'none';
+                    
+                    // Start timer
+                    startTimer();
+                } else {
+                    alert('Error loading game: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load game');
+            });
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        
+        timerInterval = setInterval(function() {
+            const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+            gameState.timeLeft = Math.max(0, gameState.timeLimit - elapsed);
+            
+            document.getElementById('timeLeft').textContent = gameState.timeLeft + 's';
+            
+            // Change color based on time
+            const timeDisplay = document.getElementById('timeLeft');
+            if (gameState.timeLeft <= 10) {
+                timeDisplay.className = 'stat-value stat-timer critical';
+            } else {
+                timeDisplay.className = 'stat-value stat-timer';
+            }
+            
+            if (gameState.timeLeft === 0) {
+                clearInterval(timerInterval);
+                if (!gameState.isAnswerSubmitted) {
+                    autoSubmitAnswer();
+                }
+            }
+        }, 100);
+    }
+
+    function submitAnswer() {
+        if (gameState.isAnswerSubmitted) return;
+        
+        gameState.isAnswerSubmitted = true;
+        clearInterval(timerInterval);
+        
+        const userAnswer = document.getElementById('answerInput').value.trim().toUpperCase();
+        const timeSpent = Math.floor((Date.now() - gameState.startTime) / 1000);
+        gameState.timeSpent = timeSpent;
+        
+        // Disable input and button during submission
+        document.getElementById('answerInput').disabled = true;
+        document.getElementById('submitBtn').disabled = true;
+        
+        fetch('/games/word-shuffle/submit/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                user_answer: userAnswer,
+                correct_word: gameState.correctWord,
+                time_spent: timeSpent,
+                time_limit: gameState.timeLimit,
+                game_config_id: currentGameConfig.game_config_id,
+                level_id: currentGameConfig.level_id,
+                viewer_id: currentGameConfig.viewer_id,
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayResult(data.result);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to submit answer');
+            gameState.isAnswerSubmitted = false;
+            document.getElementById('answerInput').disabled = false;
+            document.getElementById('submitBtn').disabled = false;
+        });
+    }
+
+    function autoSubmitAnswer() {
+        // Auto submit with empty answer if time runs out
+        const resultCard = document.getElementById('resultCard');
+        resultCard.className = 'result-card error';
+        gameState.timeSpent = gameState.timeLimit;
+        
+        document.getElementById('resultTitle').textContent = '⏰ Time\'s Up!';
+        document.getElementById('resultMessage').textContent = `The correct word was: <strong>${gameState.correctWord}</strong>`;
+        document.getElementById('resultScore').textContent = '0';
+        document.getElementById('resultTime').textContent = gameState.timeSpent;
+        
+        document.getElementById('gameContent').style.display = 'none';
+        document.getElementById('resultContent').style.display = 'block';
+    }
+
+    function displayResult(result) {
+        const resultCard = document.getElementById('resultCard');
+        
+        if (result.is_correct) {
+            resultCard.className = 'result-card success';
+            document.getElementById('resultTitle').textContent = '✅ Correct!';
+        } else {
+            resultCard.className = 'result-card error';
+            document.getElementById('resultTitle').textContent = '❌ Wrong Answer';
+        }
+        
+        document.getElementById('resultMessage').textContent = result.message;
+        document.getElementById('resultScore').textContent = result.score;
+        document.getElementById('resultTime').textContent = gameState.timeSpent;
+        
+        document.getElementById('gameContent').style.display = 'none';
+        document.getElementById('resultContent').style.display = 'block';
+    }
+
+    function loadNextWord() {
+        document.getElementById('resultContent').style.display = 'none';
+        startGame();
+    }
+
+    function endGame() {
+        // Redirect to viewer dashboard
+        window.location.href = '/';
+    }
+
+    function displayLeaderboard(leaderboard) {
+        const tbody = document.getElementById('leaderboardBody');
+        tbody.innerHTML = '';
+        
+        leaderboard.forEach(entry => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${entry.rank}${entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : ''}</strong></td>
+                <td>${entry.viewer_name}</td>
+                <td><strong>${entry.score} pts</strong></td>
+                <td>${entry.attempts_count}</td>
+            `;
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

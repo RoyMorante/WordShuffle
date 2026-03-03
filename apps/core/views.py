@@ -4,6 +4,7 @@ from apps.events.models import Event
 from apps.viewers.models import Viewer
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from apps.voting.models import Vote, VoteScore, Criteria
 from apps.raffle.models import RaffleSetting, RaffleEntry
@@ -336,7 +337,17 @@ def raffle_spin(request):
     if not eligible_entries:
         return JsonResponse({'error': 'No more eligible entries'})
 
-    winner_entry = random.choice(eligible_entries)
+    # Check raffle mode to determine winner selection
+    from apps.raffle.models import RaffleSetting
+    raffle_setting = RaffleSetting.objects.filter(event=event).first()
+    
+    if raffle_setting and raffle_setting.mode == 'game':
+        # For game mode, get the first entry (highest score)
+        # get_eligible_entries already orders by -game_score for game mode
+        winner_entry = eligible_entries[0]
+    else:
+        # For draw mode, select randomly
+        winner_entry = random.choice(eligible_entries)
 
     # Determine next rank
     current_count = RaffleWinner.objects.filter(event=event).count()
@@ -352,5 +363,232 @@ def raffle_spin(request):
         'winner_name': winner_entry.viewer.full_name,
         'rank': next_rank
     })
-    
 
+
+
+# ==========================================
+# GAME SETTINGS MANAGEMENT
+# ==========================================
+
+@login_required
+def game_settings(request):
+    """
+    Staff page to manage game configurations.
+    Allows staff to:
+    - View all games
+    - Enable/disable games
+    - Configure difficulty levels
+    - Manage game content (words)
+    """
+    if not request.user.is_staff:
+        return redirect('exhibitor_login')
+    
+    from games.models import GameConfig, GameLevel, GameContent
+    
+    event = Event.objects.filter(is_active=True).first()
+    if not event:
+        return render(request, 'staff/game_settings.html', {
+            'error': 'No active event found'
+        })
+    
+    # Get all games for the event
+    games = GameConfig.objects.filter(event=event).prefetch_related(
+        'gamelevel_set',
+        'gamecontent_set'
+    )
+    
+    # Build game data with levels and content count
+    games_data = []
+    for game in games:
+        levels = game.gamelevel_set.all().order_by('difficulty_order')
+        content_count = game.gamecontent_set.count()
+        
+        games_data.append({
+            'game': game,
+            'levels': levels,
+            'content_count': content_count,
+            'status': '✓ Active' if game.is_active else '✗ Inactive',
+        })
+    
+    context = {
+        'event': event,
+        'games_data': games_data,
+        'game_type_choices': GameConfig.GAME_TYPE_CHOICES,
+    }
+    
+    return render(request, 'staff/game_settings.html', context)
+
+
+@login_required
+@csrf_exempt
+@require_POST
+def toggle_game_status(request):
+    """
+    API endpoint to toggle game active status.
+    
+    POST data:
+    - game_id: ID of the game
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    from games.models import GameConfig
+    import json
+    
+    try:
+        data = json.loads(request.body)
+        game_id = data.get('game_id')
+        
+        if not game_id:
+            return JsonResponse({'error': 'Missing game_id'}, status=400)
+        
+        game = GameConfig.objects.get(id=game_id)
+        game.is_active = not game.is_active
+        game.save()
+        
+        return JsonResponse({
+            'success': True,
+            'game_id': game_id,
+            'is_active': game.is_active,
+            'status': 'Active' if game.is_active else 'Inactive',
+        })
+    
+    except GameConfig.DoesNotExist:
+        return JsonResponse({'error': 'Game not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def manage_game_content(request, game_id):
+    """
+    Manage content (words/questions) for a specific game.
+    
+    URL params:
+    - game_id: ID of the game
+    """
+    if not request.user.is_staff:
+        return redirect('exhibitor_login')
+    
+    from games.models import GameConfig, GameLevel, GameContent
+    
+    event = Event.objects.filter(is_active=True).first()
+    if not event:
+        return render(request, 'staff/error.html', {
+            'error': 'No active event'
+        })
+    
+    game = GameConfig.objects.get(id=game_id, event=event)
+    levels = game.gamelevel_set.all().order_by('difficulty_order')
+    
+    # Get content grouped by level
+    content_by_level = {}
+    for level in levels:
+        content = level.gamecontent_set.all()
+        content_by_level[level.id] = {
+            'level': level,
+            'content': content,
+            'count': content.count(),
+        }
+    
+    context = {
+        'event': event,
+        'game': game,
+        'levels': levels,
+        'content_by_level': content_by_level,
+    }
+    
+    return render(request, 'staff/manage_game_content.html', context)
+
+
+@login_required
+@require_POST
+@login_required
+@csrf_exempt
+def add_game_content(request):
+    """
+    API endpoint to add content to a game level.
+    
+    POST data:
+    - level_id: ID of the level
+    - data: Content data (word, question, etc.)
+    - points: Points for this content
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    from games.models import GameLevel, GameContent
+    import json
+    
+    try:
+        data = json.loads(request.body)
+        level_id = data.get('level_id')
+        content_data = data.get('data')
+        points = data.get('points', 10)
+        
+        if not level_id or not content_data:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        level = GameLevel.objects.get(id=level_id)
+        
+        # Store data in consistent format: {'word': content_data}
+        content = GameContent.objects.create(
+            game_config=level.game_config,
+            level=level,
+            content_type='word',
+            data={'word': content_data.upper()},  # Store as dict with 'word' key, uppercase
+            points=points,
+            is_active=True,
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'content_id': content.id,
+            'data': content_data,  # Return the plain string for display
+            'message': 'Content added successfully',
+        })
+    
+    except GameLevel.DoesNotExist:
+        return JsonResponse({'error': 'Level not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+@require_POST
+def delete_game_content(request):
+    """
+    API endpoint to delete game content.
+    
+    POST data:
+    - content_id: ID of the content to delete
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    from games.models import GameContent
+    import json
+    
+    try:
+        data = json.loads(request.body)
+        content_id = data.get('content_id')
+        
+        if not content_id:
+            return JsonResponse({'error': 'Missing content_id'}, status=400)
+        
+        content = GameContent.objects.get(id=content_id)
+        content.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Content deleted successfully',
+        })
+    
+    except GameContent.DoesNotExist:
+        return JsonResponse({'error': 'Content not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

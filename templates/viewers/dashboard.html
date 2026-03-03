@@ -119,7 +119,7 @@
                 {% if raffle_mode == "draw" %}
                     <a href="/raffle/draw" class="btn-primary">Enter Raffle Draw</a>
                 {% elif raffle_mode == "game" %}
-                    <a href="/raffle/game" class="btn-primary">Enter Raffle Game</a>
+                    <a href="/raffle/games/?viewer_id={{ viewer.id }}&event_id={{ viewer.event.id }}" class="btn-primary">Enter Raffle Game</a>
                 {% endif %}
             </div>
         {% else %}

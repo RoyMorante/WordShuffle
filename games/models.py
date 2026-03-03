@@ -106,6 +106,7 @@ class GameAttempt(models.Model):
 
     score = models.IntegerField()
     time_spent_seconds = models.IntegerField()
+    fastest_correct_time = models.IntegerField(null=True, blank=True)  # Fastest time for correct answer (for tie-breaking)
 
     raw_answers = models.JSONField(null=True, blank=True)
 

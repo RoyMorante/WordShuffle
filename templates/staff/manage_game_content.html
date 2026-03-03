@@ -1,0 +1,777 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Manage {{ game.name }} Content - Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="staff-container">
+    <div class="staff-header">
+        <div class="breadcrumb">
+            <a href="{% url 'game_settings' %}" class="breadcrumb-link">Game Settings</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>{{ game.title }}</span>
+        </div>
+        <h1>{{ game.title }} - Content Management</h1>
+        <p class="subtitle">Add or remove words/questions for each difficulty level</p>
+    </div>
+
+    <div class="game-overview">
+        <div class="overview-item">
+            <label>Game Type:</label>
+            <span>{{ game.get_game_type_display }}</span>
+        </div>
+        <div class="overview-item">
+            <label>Description:</label>
+            <span>{{ game.description|default:"No description" }}</span>
+        </div>
+        <div class="overview-item">
+            <label>Status:</label>
+            <span class="badge {% if game.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                {% if game.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+        </div>
+    </div>
+
+    {% if content_by_level %}
+    <div class="levels-container">
+        {% for level_id, level_data in content_by_level.items %}
+        <div class="level-section">
+            <div class="level-header">
+                <h2>{{ level_data.level.name }}</h2>
+                <div class="level-meta">
+                    <span class="meta-item">
+                        <strong>Time Limit:</strong> {{ level_data.level.time_limit_seconds }}s
+                    </span>
+                    <span class="meta-item">
+                        <strong>Content Count:</strong> <span class="count-badge">{{ level_data.count }}</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="level-content">
+                <!-- Add New Content Form -->
+                <div class="add-content-form">
+                    <h3>Add New Content</h3>
+                    <form id="form-level-{{ level_id }}">
+                        <div class="form-group">
+                            <label for="content-input-{{ level_id }}">
+                                Word/Question:
+                            </label>
+                            <input 
+                                type="text"
+                                id="content-input-{{ level_id }}"
+                                class="form-input"
+                                placeholder="Enter a word or question"
+                                maxlength="100"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="points-input-{{ level_id }}">
+                                Points:
+                            </label>
+                            <input 
+                                type="number"
+                                id="points-input-{{ level_id }}"
+                                class="form-input"
+                                value="10"
+                                min="1"
+                                max="100"
+                                style="width: 80px;"
+                            />
+                        </div>
+
+                        <button 
+                            type="button"
+                            class="btn btn-add"
+                            data-level-id="{{ level_id }}"
+                            data-level-name="{{ level_data.level.name }}"
+                        >
+                            + Add Content
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Content List -->
+                <div class="content-list">
+                    <h3>Current Content ({{ level_data.count }} items)</h3>
+
+                    {% if level_data.content %}
+                    <div class="content-items">
+                        {% for item in level_data.content %}
+                        <div class="content-item" id="content-{{ item.id }}">
+                            <div class="content-main">
+                                <span class="content-text">{{ item.data.word }}</span>
+                                <span class="content-points">{{ item.points }} pts</span>
+                            </div>
+                            <button 
+                                type="button"
+                                class="btn-delete"
+                                data-content-id="{{ item.id }}"
+                                title="Delete this content"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="empty-message">No content added yet for this level</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="alert alert-info">
+        No difficulty levels found for this game. Create levels using Django admin or management commands.
+    </div>
+    {% endif %}
+
+    <div class="actions">
+        <a href="{% url 'game_settings' %}" class="btn btn-secondary">
+            ← Back to Game Settings
+        </a>
+    </div>
+
+</div>
+
+<style>
+    .staff-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .breadcrumb {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .breadcrumb-link {
+        color: #1a73e8;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .breadcrumb-link:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-separator {
+        margin: 0 8px;
+        color: #ccc;
+    }
+
+    .staff-header {
+        margin-bottom: 30px;
+    }
+
+    .staff-header h1 {
+        font-size: 32px;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+        color: #1a73e8;
+    }
+
+    .subtitle {
+        color: #666;
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .game-overview {
+        background: #f0f7ff;
+        border: 1px solid #d0e8f2;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 30px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .overview-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .overview-item label {
+        font-weight: 600;
+        color: #333;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .overview-item span {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        width: fit-content;
+    }
+
+    .badge-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .levels-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+
+    .level-section {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .level-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .level-header h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .level-meta {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+    }
+
+    .meta-item {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .meta-item strong {
+        font-weight: 600;
+    }
+
+    .count-badge {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .level-content {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .add-content-form {
+        background: #f9f9f9;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #f0f0f0;
+    }
+
+    .add-content-form h3 {
+        margin: 0 0 16px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 12px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 6px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        font-family: inherit;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    }
+
+    .btn-add {
+        width: 100%;
+        padding: 10px 16px;
+        background: #1a73e8;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: background 0.3s ease;
+    }
+
+    .btn-add:hover {
+        background: #1557c0;
+    }
+
+    .btn-add:disabled {
+        background: #ddd;
+        cursor: not-allowed;
+    }
+
+    .content-list {
+        flex: 1;
+    }
+
+    .content-list h3 {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .content-items {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .content-item {
+        background: #f5f5f5;
+        padding: 10px 12px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        border-left: 3px solid #667eea;
+        transition: all 0.3s ease;
+        animation: slideUp 0.3s ease;
+    }
+
+    .content-item:hover {
+        background: #efefef;
+    }
+
+    .content-main {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .content-text {
+        color: #333;
+        font-weight: 500;
+        word-break: break-word;
+        flex: 1;
+    }
+
+    .content-points {
+        background: #e8f0ff;
+        color: #1a73e8;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-weight: 600;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .btn-delete {
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .btn-delete:hover {
+        background: #ee5a52;
+    }
+
+    .empty-message {
+        color: #999;
+        font-size: 13px;
+        font-style: italic;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+        background: #f9f9f9;
+        border-radius: 4px;
+    }
+
+    .alert {
+        padding: 14px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary {
+        background: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+        background: #e0e0e0;
+    }
+
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideDown {
+        from {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .level-content {
+            grid-template-columns: 1fr;
+        }
+
+        .level-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .level-meta {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .game-overview {
+            grid-template-columns: 1fr;
+        }
+
+        .staff-header h1 {
+            font-size: 24px;
+        }
+    }
+
+    /* Scrollbar styling */
+    .content-items::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .content-items::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 3px;
+    }
+
+    .content-items::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+
+    .content-items::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
+</style>
+
+<script>
+function getCsrfToken() {
+    // Try to get from hidden input
+    const input = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (input) return input.value;
+    
+    // Try to get from meta tag
+    const meta = document.querySelector('[name="csrf-token"]');
+    if (meta) return meta.getAttribute('content');
+    
+    // Default fallback
+    return '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add content button listeners
+    document.querySelectorAll('.btn-add').forEach(button => {
+        button.addEventListener('click', function() {
+            const levelId = this.getAttribute('data-level-id');
+            const levelName = this.getAttribute('data-level-name');
+            addGameContent(levelId, levelName, this);
+        });
+    });
+
+    // Delete content button listeners
+    document.querySelectorAll('.btn-delete').forEach(button => {
+        button.addEventListener('click', function() {
+            const contentId = this.getAttribute('data-content-id');
+            deleteGameContent(contentId);
+        });
+    });
+});
+
+async function addGameContent(levelId, levelName, button) {
+    const contentInput = document.getElementById(`content-input-${levelId}`);
+    const pointsInput = document.getElementById(`points-input-${levelId}`);
+    
+    const content = contentInput.value.trim();
+    const points = parseInt(pointsInput.value) || 10;
+
+    if (!content) {
+        showNotification('Please enter content', 'error');
+        contentInput.focus();
+        return;
+    }
+
+    try {
+        button.disabled = true;
+        button.classList.add('loading');
+
+        const response = await fetch('{% url "add_game_content" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({
+                level_id: levelId,
+                data: content,
+                points: points,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Find the level-section and then the content-list within it
+            const form = document.getElementById(`form-level-${levelId}`);
+            const levelSection = form.closest('.level-section');
+            const contentList = levelSection.querySelector('.content-list');
+            const contentItems = contentList.querySelector('.content-items');
+
+            if (!contentItems) {
+                // Refresh the page if content-items doesn't exist
+                location.reload();
+                return;
+            }
+
+            const newItem = document.createElement('div');
+            newItem.className = 'content-item';
+            newItem.id = `content-${data.content_id}`;
+            newItem.innerHTML = `
+                <div class="content-main">
+                    <span class="content-text">${escapeHtml(data.data)}</span>
+                    <span class="content-points">${points} pts</span>
+                </div>
+                <button 
+                    type="button"
+                    class="btn-delete"
+                    data-content-id="${data.content_id}"
+                    title="Delete this content"
+                >
+                    ✕
+                </button>
+            `;
+
+            contentItems.insertBefore(newItem, contentItems.firstChild);
+
+            // Add event listener to new delete button
+            newItem.querySelector('.btn-delete').addEventListener('click', function() {
+                deleteGameContent(this.getAttribute('data-content-id'));
+            });
+
+            // Update count
+            const countBadge = levelSection.querySelector('.count-badge');
+            countBadge.textContent = parseInt(countBadge.textContent) + 1;
+
+            // Clear inputs
+            contentInput.value = '';
+            pointsInput.value = '10';
+            contentInput.focus();
+
+            showNotification(`Added "${data.data}" to ${levelName}`, 'success');
+        } else {
+            throw new Error(data.error || 'Unknown error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to add content: ' + error.message, 'error');
+    } finally {
+        button.disabled = false;
+        button.classList.remove('loading');
+    }
+}
+
+async function deleteGameContent(contentId) {
+    if (!confirm('Are you sure you want to delete this content?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('{% url "delete_game_content" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({
+                content_id: contentId,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            const contentItem = document.getElementById(`content-${contentId}`);
+            if (contentItem) {
+                contentItem.style.animation = 'slideUp 0.3s ease reverse';
+                setTimeout(() => contentItem.remove(), 300);
+
+                // Update count
+                const countBadges = document.querySelectorAll('.count-badge');
+                countBadges.forEach(badge => {
+                    const newCount = parseInt(badge.textContent) - 1;
+                    badge.textContent = newCount;
+                });
+            }
+
+            showNotification('Content deleted successfully', 'success');
+        } else {
+            throw new Error(data.error || 'Unknown error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to delete content: ' + error.message, 'error');
+    }
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 16px;
+        background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+        color: ${type === 'success' ? '#155724' : '#721c24'};
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+        animation: slideDown 0.3s ease forwards;
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease forwards';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}
